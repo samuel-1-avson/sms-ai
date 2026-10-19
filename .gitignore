@@ -1,0 +1,9 @@
+.env
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+# Pilot env files (deployments/.env.prod) hold production secrets.
+.env.*
+!.env.example

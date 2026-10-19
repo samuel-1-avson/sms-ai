@@ -1,0 +1,10 @@
+{
+  "platform": "USSD",
+  "device": "android",
+  "operator": "vodafone",
+  "mobile": "233208074263",
+  "message": "1",
+  "serviceCode": "*712#",
+  "sessionId": "3c796dac28174f739de4262d08409c51",
+  "type": "Response"
+}

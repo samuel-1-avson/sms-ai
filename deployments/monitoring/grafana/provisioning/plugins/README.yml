@@ -1,0 +1,2 @@
+# Intentionally empty: Grafana logs an error when this folder is missing.
+apiVersion: 1

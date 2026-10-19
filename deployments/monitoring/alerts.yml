@@ -1,0 +1,191 @@
+# Alert rules for the pilot (plan §13). Prometheus evaluates them and
+# Alertmanager sends the notifications (alertmanager.yml). Every alert links
+# to its section in docs/RUNBOOKS.md.
+#
+# A labelled counter series only appears on its first increment, and
+# increase() needs two samples, so increase() alone misses the first event
+# after every deploy or restart. The "any new events" rules therefore use
+#     (m unless m offset W) or increase(m[W])
+# which counts a series that did not exist W ago at its full value, and every
+# other series by its increase over W.
+groups:
+  - name: smsai-pilot
+    rules:
+      - alert: AIEmptyReasoningResponse
+        expr: |
+          sum by (model) (
+              (ai_empty_reasoning_response_total unless ai_empty_reasoning_response_total offset 15m)
+            or
+              increase(ai_empty_reasoning_response_total[15m])
+          ) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.model }} returned responses with no visible text"
+          description: >-
+            {{ $value | humanize }} empty reasoning-model responses in the last 15 min. This must stay 0
+            (plan §7.2). Users got the fallback model's answer or an apology.
+          runbook: docs/RUNBOOKS.md#ai-empty-reasoning-responses
+
+      # Only the worker's gauge: the worker refreshes it every minute, and the
+      # api only sets it when it answers a USSD question, so the api's value can
+      # still hold yesterday's spend.
+      - alert: DailySpendAbove80Percent
+        expr: |
+          max(daily_spend_usd_total{job="smsai-worker"})
+            > 0.8 * max(daily_spend_cap_usd{job="smsai-worker"})
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Spend today is above 80% of GLOBAL_DAILY_SPEND_CAP_USD"
+          description: >-
+            Estimated spend today is {{ $value | printf "%.2f" }} USD of a
+            {{ with query "max(daily_spend_cap_usd{job=\"smsai-worker\"})" }}{{ . | first | value | printf "%.2f" }}{{ end }} USD cap.
+            AI answers stop at the cap until 00:00 UTC.
+          runbook: docs/RUNBOOKS.md#spend-cap-hit
+
+      - alert: DailySpendCapReached
+        expr: |
+          max(daily_spend_usd_total{job="smsai-worker"})
+            >= max(daily_spend_cap_usd{job="smsai-worker"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Daily spend cap reached: AI answers are paused until 00:00 UTC"
+          description: "Estimated spend today is {{ $value | printf \"%.2f\" }} USD. New questions get the outage notice."
+          runbook: docs/RUNBOOKS.md#spend-cap-hit
+
+      # Rejections are signature or payload failures. A burst means forged
+      # traffic or a webhook secret/token that no longer matches the provider.
+      - alert: WebhookRejectedSpike
+        expr: |
+          sum by (provider, reason) (
+              (webhook_rejected_total unless webhook_rejected_total offset 10m)
+            or
+              increase(webhook_rejected_total[10m])
+          ) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanize }} {{ $labels.provider }} webhooks rejected ({{ $labels.reason }}) in 10 min"
+          description: "Forged requests, or a webhook secret/USSD token that no longer matches the provider's settings."
+          runbook: docs/RUNBOOKS.md#webhook-rejections
+
+      - alert: SMSOutboundUnknownTimeout
+        expr: |
+          sum by (provider) (
+              (sms_outbound_failed_total{reason="unknown_timeout"}
+                unless sms_outbound_failed_total{reason="unknown_timeout"} offset 15m)
+            or
+              increase(sms_outbound_failed_total{reason="unknown_timeout"}[15m])
+          ) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanize }} SMS sends to {{ $labels.provider }} have an unknown outcome"
+          description: >-
+            The provider did not answer in time. These messages are never resent automatically, because the
+            user may already have them. Such sends wait in unknown_timeout for an operator.
+          runbook: docs/RUNBOOKS.md#unknown-timeout-sends
+
+      - alert: JobsFailing
+        expr: |
+          sum by (kind, result) (
+              (jobs_processed_total{result=~"failed|send_failed"}
+                unless jobs_processed_total{result=~"failed|send_failed"} offset 15m)
+            or
+              increase(jobs_processed_total{result=~"failed|send_failed"}[15m])
+          ) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanize }} {{ $labels.kind }} jobs ended {{ $labels.result }} in 15 min"
+          description: >-
+            "failed": the model kept erroring after retries and the user got the apology text.
+            "send_failed": an answer could not be dispatched after retries. Kill switches, the
+            spend cap and an open AI breaker end jobs as "ai_unavailable" instead, which does not alert.
+          runbook: docs/RUNBOOKS.md#failing-jobs
+
+      - alert: SMSAIProcessDown
+        expr: up{job=~"smsai-api|smsai-worker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is down or its /metrics is unreachable"
+          description: "Prometheus cannot scrape {{ $labels.instance }}. Webhooks or job processing are likely stopped."
+          runbook: docs/RUNBOOKS.md#process-down
+
+      - alert: MonitoringTargetDown
+        expr: up{job=~"node|alertmanager"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} is down"
+          description: "Disk, backup or notification monitoring is blind while {{ $labels.instance }} is down."
+          runbook: docs/RUNBOOKS.md#process-down
+
+      - alert: BackupFailed
+        expr: smsai_backup_last_failure_timestamp_seconds > smsai_backup_last_success_timestamp_seconds
+        labels:
+          severity: warning
+        annotations:
+          summary: "The last pg_dump failed"
+          description: "The backup service retries every hour. Check its log."
+          runbook: docs/RUNBOOKS.md#backup-failed
+
+      - alert: BackupStale
+        expr: |
+          time() - smsai_backup_last_success_timestamp_seconds > 26 * 3600
+            or
+          absent(smsai_backup_last_success_timestamp_seconds)
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No successful database backup in the last 26 hours"
+          runbook: docs/RUNBOOKS.md#backup-failed
+
+      - alert: RestoreDrillStale
+        expr: |
+          time() - smsai_restore_drill_last_success_timestamp_seconds > 8 * 86400
+            or
+          absent(smsai_restore_drill_last_success_timestamp_seconds)
+        for: 6h
+        labels:
+          severity: info
+        annotations:
+          summary: "No passed restore drill in the last 8 days"
+          description: "Run scripts/restore_drill.sh, and schedule it weekly."
+          runbook: docs/RUNBOOKS.md#restore-drill
+
+      # Per block device: node-exporter lists a disk once per mountpoint.
+      - alert: DiskSpaceLow
+        expr: |
+          min by (device) (
+            node_filesystem_avail_bytes{fstype=~"ext4|xfs|btrfs"}
+              / node_filesystem_size_bytes{fstype=~"ext4|xfs|btrfs"}
+          ) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Only {{ $value | humanizePercentage }} space left on {{ $labels.device }}"
+          description: "Postgres, dumps, Prometheus and container logs share this disk."
+          runbook: docs/RUNBOOKS.md#disk-space
+
+      - alert: DiskSpaceCritical
+        expr: |
+          min by (device) (
+            node_filesystem_avail_bytes{fstype=~"ext4|xfs|btrfs"}
+              / node_filesystem_size_bytes{fstype=~"ext4|xfs|btrfs"}
+          ) < 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Only {{ $value | humanizePercentage }} space left on {{ $labels.device }}; Postgres stops when its disk is full"
+          runbook: docs/RUNBOOKS.md#disk-space

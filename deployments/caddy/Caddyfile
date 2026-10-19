@@ -1,0 +1,76 @@
+# Edge proxy for the single-VM pilot (deployments/compose.prod.yaml).
+# Caddy obtains and renews the TLS certificate for DOMAIN automatically.
+#
+# Environment, from the env file via compose:
+#   DOMAIN                public hostname. Its DNS A record must point at the VM before the first start.
+#   ACME_EMAIL            contact address for the Let's Encrypt account.
+#   OPS_ALLOWED_CIDRS     space-separated IPs/CIDRs allowed to reach /admin, /metrics, /readyz and /grafana.
+#   CADDY_GLOBAL_OPTIONS  extra global options. `local_certs` makes a dry run use Caddy's own CA instead of ACME.
+{
+	email {$ACME_EMAIL}
+	{$CADDY_GLOBAL_OPTIONS}
+	servers {
+		protocols h1 h2
+	}
+}
+
+# Operator-only routes: anyone outside OPS_ALLOWED_CIDRS gets 403 before the
+# request reaches the API's bearer-token check or Grafana's login.
+(ops_only) {
+	@outside_allowlist not remote_ip {$OPS_ALLOWED_CIDRS}
+	respond @outside_allowlist "Forbidden" 403
+}
+
+{$DOMAIN} {
+	# No access log on purpose: the mNotify USSD callback token (and the callback tokens of the dormant MTN,
+	# Hubtel and Arkesel adapters) is in the query string, e.g. /webhooks/ussd/mnotify/session?token=...
+	# (docs/PROVIDER_VALIDATION.md). The mNotify API key is in a query string too, but only on OUTBOUND calls
+	# (https://api.mnotify.com/api/...?key=...), which never pass through this proxy. The API logs method, path,
+	# status and latency without query strings, and never logs outbound request URLs.
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	request_body {
+		max_size 256KB
+	}
+
+	# Provider callbacks: USSD sessions (mNotify). The dormant adapters also use SMS inbound and delivery reports.
+	handle /webhooks/* {
+		reverse_proxy api:8080 {
+			# Set, never appended, so MNOTIFY_CLIENT_IP_HEADER=X-Real-IP
+			# (or the MTN/Hubtel/Arkesel equivalent) cannot be forged by the caller.
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# Liveness, for an external uptime monitor.
+	handle /healthz {
+		reverse_proxy api:8080
+	}
+
+	handle /admin/* {
+		import ops_only
+		reverse_proxy api:8080
+	}
+	handle /metrics {
+		import ops_only
+		reverse_proxy api:8080
+	}
+	handle /readyz {
+		import ops_only
+		reverse_proxy api:8080
+	}
+	handle /grafana* {
+		import ops_only
+		reverse_proxy grafana:3000
+	}
+
+	# Everything else, including the development simulator.
+	handle {
+		respond 404
+	}
+}

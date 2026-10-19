@@ -1,0 +1,17 @@
+{
+  "_note": "Copied from the example response on MTN's 'Understanding OAuth 2.0' page (https://developers.mtn.com/getting-started/understanding-oauth-20). It is MTN's documentation sample, not a real credential.",
+  "refresh_token_expires_in": "0",
+  "api_product_list": "[MTN Customer Plans API v2, Payment_Staging]",
+  "api_product_list_json": ["MTN Customer Plans API v2", "Payment_Staging"],
+  "organization_name": "mtn-prod",
+  "developer.email": "nerd@mtn.com",
+  "token_type": "BearerToken",
+  "issued_at": "1611316770076",
+  "client_id": "xNnREu1DNGfiwzQZ5HUN8IAUwZSW1rtp",
+  "access_token": "GTPY9VUHCqKVMRB0cHxnmAp0utR0",
+  "application_name": "716bbe61-f14a-4e45-9b56-a62ff8e0d347",
+  "scope": "",
+  "expires_in": "3599",
+  "refresh_count": "0",
+  "status": "approved"
+}

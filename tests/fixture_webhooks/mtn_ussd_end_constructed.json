@@ -1,0 +1,8 @@
+{
+  "_note": "Constructed, not copied from MTN: messageType 2 (End), the session closed on the network side.",
+  "sessionId": "9a3c0e51b5b64f0f",
+  "messageType": "2",
+  "msisdn": "233541234567",
+  "serviceCode": "*713*1#",
+  "ussdString": ""
+}

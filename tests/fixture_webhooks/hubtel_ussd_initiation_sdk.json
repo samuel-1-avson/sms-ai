@@ -1,0 +1,9 @@
+{
+  "Mobile": "233244234546",
+  "SessionId": "234567ityjhgwe654765utrye",
+  "ServiceCode": "7c920dc49b7a40588c657119ce599044",
+  "Type": "initiation",
+  "Message": "*711*23#",
+  "Operator": "mtn",
+  "Platform": "USSD"
+}

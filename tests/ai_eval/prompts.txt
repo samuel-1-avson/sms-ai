@@ -1,0 +1,33 @@
+# One prompt per line; blank lines and # comments are ignored.
+# Mix of WASSCE/BECE study questions, everyday Ghana questions and
+# questions that must not get invented live data (plan §2, §16).
+What is photosynthesis?
+Explain Newton's first law
+Explain Ohm's law with an example
+Solve 2x + 5 = 15 and explain each step
+What is the difference between mitosis and meiosis?
+Define osmosis in simple words
+What causes the seasons on Earth?
+What is the formula for the area of a circle?
+Simplify 3/4 + 2/3
+What is a noun? Give two examples
+What is the past tense of "bring"?
+Who was Ghana's first president?
+When did Ghana gain independence?
+What is the capital of the Volta Region?
+What is inflation?
+How do I calculate simple interest on GHS 500 at 10% for 2 years?
+What is the boiling point of water in Celsius?
+What are the three states of matter?
+Explain the water cycle
+What is a prime number? List the first five
+How do I write a formal letter to my headmaster?
+Give me three tips for revising for WASSCE
+What is malaria and how can I prevent it?
+What should I do if I have a fever for three days?
+How can a market trader keep simple daily sales records?
+What is the difference between profit and revenue?
+Where can I book my next flight?
+What is the exchange rate of the cedi to the dollar today?
+Translate "good morning" into Twi
+What is democracy?

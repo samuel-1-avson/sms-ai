@@ -1,0 +1,135 @@
+# Local development stack. From the repository root:
+#   docker compose -f deployments/compose.yaml up --build        # postgres + api + worker
+#   docker compose -f deployments/compose.yaml --profile test run --rm test
+#   docker compose -f deployments/compose.yaml --profile test-race run --rm test-race
+#   docker compose -f deployments/compose.yaml --profile load run --rm load   # see tests/load/README.md
+#   docker compose -f deployments/compose.yaml --profile monitoring up -d prometheus
+# Simulator: http://localhost:8088/simulator
+name: smsai
+
+x-app-env: &app-env
+  DATABASE_URL: postgres://smsai:smsai_dev_password@postgres:5432/smsai?sslmode=disable
+  HTTP_ADDR: ":8080"
+  # The mock gateway posts signed delivery receipts back to the API.
+  MOCK_DLR_CALLBACK_URL: http://api:8080/webhooks/sms/mock/status
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: smsai
+      POSTGRES_PASSWORD: smsai_dev_password
+      POSTGRES_DB: smsai
+    ports:
+      - "127.0.0.1:5442:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smsai -d smsai"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build:
+      context: ..
+      dockerfile: deployments/docker/Dockerfile
+    image: smsai-ghana:dev
+    command: ["/app/api"]
+    env_file:
+      - path: ../.env
+        required: false
+    environment: *app-env
+    ports:
+      - "127.0.0.1:8088:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    image: smsai-ghana:dev
+    command: ["/app/worker"]
+    env_file:
+      - path: ../.env
+        required: false
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+  # Runs unit + integration tests against the postgres service.
+  test:
+    profiles: ["test"]
+    image: golang:1.24-alpine
+    working_dir: /src
+    volumes:
+      - ..:/src
+      - gomod:/go/pkg/mod
+      - gocache:/root/.cache/go-build
+    environment:
+      GOTOOLCHAIN: local
+      GOFLAGS: -buildvcs=false
+      SMSAI_TEST_DATABASE_URL: postgres://smsai:smsai_dev_password@postgres:5432/postgres?sslmode=disable
+    command: ["go", "test", "-p", "1", "-count=1", "./..."]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # The same suite under the race detector, which needs cgo (glibc image).
+  # Its databases get a suffix so it can run alongside the test service.
+  test-race:
+    profiles: ["test-race"]
+    image: golang:1.24-bookworm
+    working_dir: /src
+    volumes:
+      - ..:/src
+      - gomod:/go/pkg/mod
+      - gocache-race:/root/.cache/go-build
+    environment:
+      GOTOOLCHAIN: local
+      GOFLAGS: -buildvcs=false
+      CGO_ENABLED: "1"
+      SMSAI_TEST_DATABASE_URL: postgres://smsai:smsai_dev_password@postgres:5432/postgres?sslmode=disable
+      SMSAI_TEST_DB_SUFFIX: _race
+    command: ["go", "test", "-race", "-p", "1", "-count=1", "./..."]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Load generator against the running api service (tests/load/README.md).
+  # Flags go after the service name, e.g. `run --rm load -rate 50 -duration 2m`.
+  load:
+    profiles: ["load"]
+    image: golang:1.24-alpine
+    working_dir: /src
+    volumes:
+      - ..:/src
+      - gomod:/go/pkg/mod
+      - gocache:/root/.cache/go-build
+    # MOCK_WEBHOOK_SECRET and ADMIN_API_TOKEN come from the same file as the api's.
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      GOTOOLCHAIN: local
+      GOFLAGS: -buildvcs=false
+      LOAD_TARGET: http://api:8080
+    entrypoint: ["go", "run", "./tests/load"]
+
+  prometheus:
+    profiles: ["monitoring"]
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:9099:9090"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  gomod:
+  gocache:
+  gocache-race:

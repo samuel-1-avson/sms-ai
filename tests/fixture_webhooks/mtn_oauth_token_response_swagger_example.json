@@ -1,0 +1,6 @@
+{
+  "_note": "Built from the per-field examples of SuccessToken in MTN's OAuth V1 Swagger (https://developers.mtn.com/products/oauth-v1/download/swagger): access_token Q3C3dhzGxB4I8AZJ6ldPxuSB3Y6o, token_type bearer, expires_in 3599. MTN's documentation sample, not a credential.",
+  "access_token": "Q3C3dhzGxB4I8AZJ6ldPxuSB3Y6o",
+  "token_type": "bearer",
+  "expires_in": "3599"
+}

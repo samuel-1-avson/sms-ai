@@ -1,0 +1,17 @@
+{
+  "_note": "Constructed, not copied from MTN: field names and nesting follow OutboundSMSMessageResponse in MTN's SMS V2 Swagger (https://developers.mtn.com/products/mtn-sms-interface/download/swagger), which prints no example values. The success code 0000 is borrowed from MTN's other MADAPI files, and every value is invented.",
+  "statusCode": "0000",
+  "statusMessage": "Successful",
+  "transactionId": "1365478abcz-fdhsdfh54351",
+  "data": {
+    "requestId": "7f3c1d52-9d1e-4a56-b6a1-0c5e8e2a9b10",
+    "clientCorrelator": "f2665231-522f-32b6-accf-6ac8426bfd5c",
+    "planId": "",
+    "serviceId": "",
+    "serviceType": "",
+    "isChargeable": "false",
+    "verificationFlagValue": "",
+    "receiverAddress": ["233541234567"]
+  },
+  "summary": {}
+}

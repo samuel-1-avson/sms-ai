@@ -1,0 +1,3 @@
+# Intentionally empty: Grafana logs an error when this folder is missing.
+# Alerting is Prometheus rules (deployments/monitoring/alerts.yml) + Alertmanager.
+apiVersion: 1

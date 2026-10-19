@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "path": "/callback",
+  "query": {"sms_id": "abc123", "status": "DELIVERED"},
+  "timestamp": "1783425600",
+  "canonical": "1783425600.{\"sms_id\":\"abc123\",\"status\":\"DELIVERED\"}"
+}

@@ -1,0 +1,11 @@
+{
+  "_note": "Constructed, not copied from MTN: field names and types follow InboundRequest in MTN's USSD Swagger; the values (a Ghana MSISDN written without '+', the dialled code as ussdString, optional cellId/language/imsi) are assumptions about what MTN Ghana sends.",
+  "sessionId": "9a3c0e51b5b64f0f",
+  "messageType": "0",
+  "msisdn": "233541234567",
+  "serviceCode": "*713*1#",
+  "ussdString": "*713*1#",
+  "cellId": "12345",
+  "language": "en",
+  "imsi": "620011234567890"
+}

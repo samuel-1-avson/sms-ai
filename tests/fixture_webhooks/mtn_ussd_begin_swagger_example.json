@@ -1,0 +1,8 @@
+{
+  "_note": "Built from the per-field examples of InboundRequest in MTN's USSD Swagger (https://developers.mtn.com/products/ussd/download/swagger): sessionId 01235, messageType 0, msisdn 2252312345, serviceCode 321123, ussdString 'Please vote for xxx.'. MTN prints no complete sample request, and the msisdn is an Ivory Coast number.",
+  "sessionId": "01235",
+  "messageType": "0",
+  "msisdn": "2252312345",
+  "serviceCode": "321123",
+  "ussdString": "Please vote for xxx."
+}

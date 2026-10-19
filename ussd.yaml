@@ -1,0 +1,554 @@
+swagger: '2.0'
+info:
+  title: MTN Messaging USSD API
+  version: 1.0.0
+  description: Provides a RESTful API to expose USSD capability.
+host: api.mtn.com
+basePath: /v1/
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: x-api-key
+tags:
+  - name: Accessible to 3PP
+    description: >-
+      Accessible to Client APP (3PP) - ApiKeyAuth, to subscribe (MO/MT),
+      unsubscribe and push/send message.
+    externalDocs:
+      url: 'https://#'
+  - name: Accessible to USSD Gateway
+    description: >-
+      Used by USSDGW - using ApiKeyAuth, to send MO generated messages to 3PP
+      through MADAPI.
+    externalDocs:
+      url: 'https://#'
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /messages/ussd/subscription:
+    post:
+      description: >-
+        This function enables 3PP to subscribe to receive MO-generated messages
+        from MADAPI.
+      summary: >-
+        The 3PP subscribes/registers to receive USSD MO-generated messages via
+        MADAPI
+      tags:
+        - Accessible to 3PP
+      operationId: ussdNotificationStart
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: request body
+          schema:
+            $ref: '#/definitions/SubscriptionRequest'
+      responses:
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/SubscriptionResponse'
+        '400':
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Invalid access token. Please try with a valid token
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: >
+            Authorization credentials passed and accepted but account does
+            forbidden to send USSD
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+        '415':
+          description: API does not support the requested content type
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Error'
+        '501':
+          description: |
+            The HTTP method being used has not yet been implemented for
+            the requested resource
+          schema:
+            $ref: '#/definitions/Error'
+        '503':
+          description: The service requested is currently unavailable
+          schema:
+            $ref: '#/definitions/Error'
+  /messages/ussd/inbound:
+    post:
+      description: >-
+        This function sends USSD MO-generated message to a 3PP with subscription
+        on MADAPI.
+      summary: The USSDGW sends USSD MO-generated message to 3PP through MADAPI
+      tags:
+        - Accessible to USSD Gateway
+      operationId: inbound
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: request body
+          schema:
+            $ref: '#/definitions/InboundRequest'
+      responses:
+        '200':
+          description: Created
+          schema:
+            $ref: '#/definitions/InboundResponse'
+        '400':
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Invalid access token. Please try with a valid token
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: >
+            Authorization credentials passed and accepted but account does
+            forbidden to send USSD
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+        '415':
+          description: API does not support the requested content type
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Error'
+        '501':
+          description: |
+            The HTTP method being used has not yet been implemented for
+            the requested resource
+          schema:
+            $ref: '#/definitions/Error'
+        '503':
+          description: The service requested is currently unavailable
+          schema:
+            $ref: '#/definitions/Error'
+  '/messages/ussd/subscription/{subscriptionId}':
+    delete:
+      description: >-
+        This function enables 3PP to unsubscribe from receiving MO-generated
+        messages from MADAPI.
+      summary: >-
+        The 3PP unsubscribes/de-registers from receiving/sending USSD MO/MT
+        messages via MADAPI
+      tags:
+        - Accessible to 3PP
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: subscriptionId
+          type: string
+          required: true
+          description: >-
+            It is the subscriptionId that is used to delete existing USSD
+            subscription .
+          x-example: '123456'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/SubscriptionResponse'
+        '400':
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Invalid access token. Please try with a valid token
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: >
+            Authorization credentials passed and accepted but account does
+            forbidden to send USSD
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+        '415':
+          description: API does not support the requested content type
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Error'
+        '501':
+          description: |
+            The HTTP method being used has not yet been implemented for
+            the requested resource
+          schema:
+            $ref: '#/definitions/Error'
+        '503':
+          description: The service requested is currently unavailable
+          schema:
+            $ref: '#/definitions/Error'
+  /messages/ussd/outbound:
+    post:
+      description: >-
+        This function is used to send/push USSD MT Message to USSDGW for 3PPs
+        with subscription on MADAPI.
+      summary: The 3PP sends USSD MT Message to mobile subscriber through MADAPI
+      tags:
+        - Accessible to 3PP
+      operationId: sendUSSDRequest
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          description: request body
+          schema:
+            $ref: '#/definitions/OutboundRequest'
+      responses:
+        '201':
+          description: Created
+          schema:
+            $ref: '#/definitions/OutboundResponse'
+        '400':
+          description: Bad request
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Invalid access token. Please try with a valid token
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: >
+            Authorization credentials passed and accepted but account does
+            forbidden to send USSD
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Not Found
+          schema:
+            $ref: '#/definitions/Error'
+        '415':
+          description: API does not support the requested content type
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Error'
+        '501':
+          description: |
+            The HTTP method being used has not yet been implemented for
+            the requested resource
+          schema:
+            $ref: '#/definitions/Error'
+        '503':
+          description: The service requested is currently unavailable
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  SubscriptionRequest:
+    type: object
+    required:
+      - serviceCode
+      - callbackUrl
+      - targetSystem
+    properties:
+      serviceCode:
+        type: string
+        example: '*1234*356#'
+      callbackUrl:
+        type: string
+        description: URL from which the 3PP will receive MO-generated USSD message.
+        example: 'http://10.138.40.69:11400/xportal/services/NetworkNotify'
+      targetSystem:
+        type: string
+        description: Name of the destined system for the callback url.
+        example: AYO
+  SubscriptionResponse:
+    type: object
+    required:
+      - data
+      - statusCode
+      - statusMessage
+      - transactionId
+      - _link
+    properties:
+      statusCode:
+        type: string
+        example: '0000'
+      statusMessage:
+        type: string
+        example: Created
+      transactionId:
+        type: string
+        example: xyz-0hij0hjh0-9y6
+      data:
+        type: object
+        properties:
+          subscriptionId:
+            type: string
+            description: >-
+              The value is a random number defined by MADAPI and must be unique.
+              Associated with the registered USSD.
+            example: 123-xyz-456
+      _link:
+        $ref: '#/definitions/Links'
+  OutboundRequest:
+    type: object
+    required:
+      - sessionId
+      - messageType
+      - msisdn
+      - serviceCode
+      - ussdString
+    properties:
+      sessionId:
+        type: string
+        description: Unique identifier of the session.
+        example: '01235'
+      messageType:
+        type: string
+        description: >-
+          Message type.
+          0-Begin|1-Continue|2-End|3-Notification|4-Cancel|5-Timeout.
+        example: '0'
+      msisdn:
+        type: string
+        description: Mobile number of the message recipient.
+        example: '2252312345'
+      serviceCode:
+        type: string
+        example: '321123'
+      ussdString:
+        type: string
+        description: >-
+          USSD message content. If messageType is of type 4-Abort, this
+          attribute will contain the abort reason or message.
+        example: Please vote for xxx.
+  InboundRequest:
+    type: object
+    required:
+      - sessionId
+      - messageType
+      - msisdn
+      - serviceCode
+      - ussdString
+    properties:
+      sessionId:
+        type: string
+        description: Unique identifier of the session.
+        example: '01235'
+      messageType:
+        type: string
+        description: >-
+          Message type.
+          0-Begin|1-Continue|2-End|3-Notification|4-Cancel|5-Timeout.
+        example: '0'
+      msisdn:
+        type: string
+        description: Mobile number of the message recipient.
+        example: '2252312345'
+      serviceCode:
+        type: string
+        example: '321123'
+      ussdString:
+        type: string
+        description: >-
+          USSD message content. If messageType is of type 4-Abort, this
+          attribute will contain the abort reason or message.
+        example: Please vote for xxx.
+      cellId:
+        type: string
+        description: >-
+          Cell Id of the subscriber. A GSM Cell ID (CID) is a unique number used
+          to identify each base transceiver station (BTS) or sector of a BTS
+          within a location area code (LAC) if not within a GSM network.
+      language:
+        type: string
+        description: Language of preference of the subscriber
+      imsi:
+        type: string
+        description: >-
+          IMSI of the subscriber. An international mobile subscriber identity
+          (IMSI) is a unique number, usually fifteen digits, associated with
+          Global System for Mobile Communications (GSM) and Universal Mobile
+          Telecommunications System (UMTS) network mobile phone users. The IMSI
+          is a unique number identifying a GSM subscriber.
+  InboundResponse:
+    type: object
+    required:
+      - statusCode
+      - statusMessage
+      - transactionId
+      - data
+      - _link
+    properties:
+      statusCode:
+        type: string
+        example: '0000'
+      statusMessage:
+        type: string
+        example: ''
+      transactionId:
+        type: string
+        example: ''
+      data:
+        type: object
+        required:
+          - outboundResponse
+        properties:
+          inboundResponse:
+            type: string
+            description: Response value.
+            example: null
+          userInputRequired:
+            type: boolean
+            description: Is user input required.
+            example: true
+          messageType:
+            type: integer
+            description: The messageType to send
+            example: 1
+          serviceCode:
+            type: string
+            description: 'The service code or short code of the service. '
+            example: '9000'
+          msisdn:
+            type: string
+            description: The msisdn to send the response to.
+      _link:
+        $ref: '#/definitions/Links'
+  OutboundResponse:
+    type: object
+    required:
+      - statusCode
+      - statusMessage
+      - transactionId
+      - data
+      - _link
+    properties:
+      statusCode:
+        type: string
+        example: '0000'
+      statusMessage:
+        type: string
+        example: ''
+      transactionId:
+        type: string
+        example: ''
+      data:
+        type: object
+        required:
+          - outboundResponse
+          - sessionId
+          - msisdn
+        properties:
+          outboundResponse:
+            type: string
+            description: Value 0 indicates success.
+            example: '0000'
+          sessionId:
+            type: string
+            description: Unique identifier of the session.
+            example: '01235'
+          msisdn:
+            type: string
+            description: Mobile user msisdn.
+            example: '2341234567'
+      _link:
+        $ref: '#/definitions/Links'
+  Error:
+    type: object
+    required:
+      - statusCode
+      - statusMessage
+      - transactionId
+    properties:
+      statusCode:
+        type: string
+        description: >-
+          This is the MADAPI Canonical Response Code (it is 4 characters long
+          and it is not the HTTP Status Code which is 3 characters long).
+          Back-end system errors are mapped to specific Canonical Response Codes
+          which are returned. More information on these mappings can be found on
+          the MADAPI Confluence Page 'Response Codes'
+        example: '3001'
+      statusMessage:
+        type: string
+        description: >-
+          More details on the returned status code which can be shown to a
+          client
+        example: A system error has occured
+      supportMessage:
+        type: string
+        description: >-
+          Internal message meant for consumers of the API to troubleshoot the
+          error (could possible include the back-end system error code in the
+          message if it would be useful)
+        example: 400 Bad Request
+      transactionId:
+        type: string
+        description: MADAPI generated Id to include for tracing requests
+        example: xyz-t960-tuy
+      timestamp:
+        type: string
+        format: date-time
+        description: Timestamp that the error occurred
+        example: '2020-08-01T12:34'
+      path:
+        type: string
+        description: The path that caused the error
+        example: 'https://api.mtn.com/v1/<path>'
+      method:
+        type: string
+        description: The HTTP method type that was used
+        example: POST
+  Links:
+    type: object
+    required:
+      - self
+    properties:
+      self:
+        type: object
+        required:
+          - href
+        description: ''
+        properties:
+          href:
+            type: string
+            description: ''
+            example: 'https://api.mtn.com/v1/messages/ussd/send'

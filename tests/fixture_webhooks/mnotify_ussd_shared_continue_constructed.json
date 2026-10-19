@@ -1,0 +1,7 @@
+{
+  "_note": "Constructed, not copied from mNotify: the same fields as the shared request example, with the user's menu entry or question as data. The file does not say whether sequenceID changes per request or stays per session; here it changes. Values are invented.",
+  "msisdn": "233541509394",
+  "sequenceID": "6789940011",
+  "data": "What is photosynthesis?",
+  "timestamp": "2025-09-01T11:22:40Z"
+}

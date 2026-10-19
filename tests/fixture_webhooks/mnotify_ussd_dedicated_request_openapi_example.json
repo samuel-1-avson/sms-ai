@@ -1,0 +1,9 @@
+{
+  "_note": "Copied from the request example of 'Dedicated USSD' in mNotify's OpenAPI file (https://developer.bms.africa/openapi14.yaml, tag USSD, operation ussd/dedicated). The example shows a continuation (text 1); what the first request holds is not documented.",
+  "shortCode": "*123#",
+  "msIsdn": "233541509394",
+  "text": "1",
+  "sessId": "ABC123456",
+  "ussdGwId": "MTN",
+  "language": "en"
+}

@@ -1,0 +1,13 @@
+# Loads the dashboards in deployments/monitoring/grafana/dashboards.
+# Edit the JSON there; changes made in the UI are not saved.
+apiVersion: 1
+
+providers:
+  - name: smsai
+    folder: SMS AI Ghana
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 60
+    options:
+      path: /etc/grafana/dashboards

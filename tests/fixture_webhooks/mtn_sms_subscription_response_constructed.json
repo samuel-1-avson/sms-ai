@@ -1,0 +1,9 @@
+{
+  "_note": "Constructed, not copied from MTN: the SMS V2 Swagger defines this response (statusCode, statusMessage, transactionId, data.id) without example values.",
+  "statusCode": "0000",
+  "statusMessage": "Successful",
+  "transactionId": "1365478abcz-fdhsdfh54351",
+  "data": {
+    "id": "sub-6328f1c2"
+  }
+}

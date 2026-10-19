@@ -1,0 +1,118 @@
+# Local Ghana Grounding Store seed (plan §7.5).
+#
+# Every answer must be plain GSM-7 and at most 160 characters (checked at
+# load time). Entries with `reviewed: false` are used in development only:
+# in staging/production the service loads reviewed entries exclusively, so a
+# person must confirm each fact against the cited authority before the pilot
+# and flip `reviewed` to true.
+#
+# triggers: short phrases. A snippet is a direct (0-token) reply when every
+# word of one trigger appears in the question and the question has little
+# else in it; otherwise a full trigger match only injects the fact into the
+# model prompt as "Verified Ghana Fact".
+version: 1
+snippets:
+  - slug: nhis-check-renew
+    category: civic
+    triggers: ["check nhis", "nhis status", "nhis validity", "renew nhis", "nhis renew", "nhis expiry", "nhis expired"]
+    answer: "To check or renew NHIS, dial *929# on any network and follow the prompts, or visit an NHIS district office with your Ghana Card or NHIS card."
+    direct_reply: true
+    reviewed: false
+    source: "NHIA membership page https://nhis.gov.gh/membership (renew via *929#, MyNHIS app or district office); NHIA deputy CEO in Graphic 2019-12-16 (*929# checks policy validity). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: ghana-card-sim-link
+    category: telco
+    triggers: ["link ghana card", "ghana card sim", "ghana card mtn", "ghana card telecel", "ghana card airteltigo", "sim registration", "register sim"]
+    answer: "To link your Ghana Card to your SIM, dial *404# and follow the prompts, then finish registration at your network's service centre with your Ghana Card."
+    direct_reply: true
+    reviewed: false
+    source: "NCA https://nca.org.gh/registration-process/ (USSD 404) and GH SIM Self Reg guide v9 (STAGE 1 *404#); MTN help centre article 7526277616658 (dial *404#). Plan's *400# is NCA's old SIM-registration check code, not Ghana Card linking. New biometric re-registration due before end-2026: re-check at launch. Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: ecg-prepaid
+    category: utility
+    triggers: ["ecg prepaid", "buy ecg", "ecg credit", "ecg units", "ecg token", "prepaid meter"]
+    answer: "Buy ECG prepaid credit by dialing *226# and following the prompts, or use MoMo or an ECG vending point. Report faults at your nearest ECG office."
+    direct_reply: true
+    reviewed: false
+    source: "ECG public notice 2025-12-29 (credit via ECG Power App/short code *226# and third-party vendors); ECG home page https://www.ecg.com.gh/ (faults: call centre 0302-611611 or nearest office). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: momo-pin-safety
+    category: telco
+    triggers: ["momo pin", "share pin", "mobile money pin", "momo otp", "share otp"]
+    answer: "Never share your MoMo PIN or OTP with anyone, even callers who say they are from your network. Your network will never ask for your PIN."
+    direct_reply: true
+    reviewed: false
+    source: "MTN help centre article 36643577740690 (never disclose your MoMo PIN); MTN MoMo statement in Graphic 2025-04-15 (not even someone claiming to be from MTN); Ghana Chamber of Telecommunications via GNA 2026-09-22. Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: momo-wrong-transfer
+    category: telco
+    triggers: ["momo wrong number", "momo reversal", "reverse momo", "momo scam", "momo fraud", "sent money wrong"]
+    answer: "If you sent MoMo to the wrong number or were scammed, call your network on 100 at once and ask for a reversal. Never share your PIN."
+    direct_reply: true
+    reviewed: false
+    source: "Helpline 100: MTN help centre article 5336768474386, https://telecel.com.gh/contact-us/, https://www.at.com.gh/personal/customer-care. MTN also offers self-service reversal (*170# > 6 My Wallet > 8 Reversal, article 28353061724946). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: telco-customer-care
+    category: telco
+    triggers: ["customer care", "customer service", "call mtn", "call telecel", "call airteltigo"]
+    answer: "MTN, Telecel and AT customer care can be reached by calling 100 from your line."
+    direct_reply: true
+    reviewed: false
+    source: "MTN help centre article 5336768474386 (call 100); https://telecel.com.gh/contact-us/ (helpline 100); https://www.at.com.gh/personal/customer-care (call 100); NCA numbering plan (harmonised call centre code 100). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: emergency-numbers
+    category: civic
+    triggers: ["emergency number", "police number", "ambulance number", "fire service number", "call police", "call ambulance"]
+    answer: "Ghana emergency numbers: 112 general emergency, 191 police, 192 fire service, 193 ambulance."
+    direct_reply: true
+    reviewed: false
+    source: "NCA numbering plan https://www.nca.org.gh/wp-content/uploads/2021/11/NUMBERING-PLAN-FOR-GHANA.pdf (112, 191, 192, 193 operational); Police via GNA 2025-12-31 (18555, 191, 112); GNFS via Rainbow Radio 2026-05-26 (192, 112); NAS CEO July 2026 (dial 112). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: passport-application
+    category: civic
+    triggers: ["ghana passport", "apply passport", "passport application", "renew passport", "passport renewal"]
+    answer: "Apply for a Ghana passport online at passport.mfa.gov.gh, pay the fee, then attend your appointment at a Passport Application Centre with your Ghana Card."
+    direct_reply: true
+    reviewed: false
+    source: "MFA passport portal https://passport.mfa.gov.gh/ (apply online, pay, biometrics at a PAC) and https://passport.mfa.gov.gh/faqs (Ghana Card mandatory for new and renewal). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: gra-tin
+    category: civic
+    triggers: ["gra tin", "tin number", "tax identification number", "get tin"]
+    answer: "For individuals, your Ghana Card PIN now serves as your GRA TIN. For help, visit gra.gov.gh or a GRA office."
+    direct_reply: true
+    reviewed: false
+    source: "GRA TIN FAQ https://gra.gov.gh/tin/tin-faq/ (for individuals the Ghana Card PIN is the TIN, from 1 April 2021; companies keep GRA TINs). Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: wassce-grading
+    category: education
+    triggers: ["wassce grade", "wassce grading", "waec grade", "waec grading", "a1 f9", "wassce credit"]
+    answer: "WASSCE grades: A1 75-100, B2 70-74, B3 65-69, C4 60-64, C5 55-59, C6 50-54, D7 45-49, E8 40-44, F9 0-39. A1 to C6 are credit passes."
+    context: "WAEC WASSCE uses nine grades from A1 (excellent) to F9 (fail). A1-C6 are credits, D7 and E8 are passes, F9 is a fail."
+    direct_reply: true
+    reviewed: false
+    source: "UNVERIFIED score bands: no WAEC Ghana page publishes them; bands match Wikipedia and most guides, some sites give A1 80-100. Grade meanings (A1-C6 credit, D7-E8 pass, F9 fail) consistent everywhere. Confirm with WAEC or use the no-percentage answer in docs/GROUNDING_REVIEW.md. Accessed 2026-10-17."
+
+  - slug: bece-aggregate
+    category: education
+    triggers: ["bece aggregate", "calculate aggregate", "bece grade", "bece grading"]
+    answer: "BECE aggregate = your grades (1 best, 9 worst) in 4 core subjects plus your best 2 electives. The best possible aggregate is 6."
+    direct_reply: true
+    reviewed: false
+    source: "GES statement via GBC 2025-09-02 (aggregate = English + Maths + Science + Social Studies + best two other subjects); CSSPS 2026 placement figures report aggregates 6-18. Accessed 2026-10-17. See docs/GROUNDING_REVIEW.md."
+
+  - slug: ohms-law
+    category: education
+    triggers: ["ohm law", "ohms law"]
+    answer: "Ohm's law: V = I x R. Voltage (volts) equals current (amps) times resistance (ohms)."
+    direct_reply: true
+    reviewed: false
+    source: "OpenStax College Physics 2e section 20.2 https://openstax.org/books/college-physics-2e/pages/20-2-ohms-law-resistance-and-simple-circuits (V = IR; 1 ohm = 1 volt per ampere). Accessed 2026-10-17."
+
+  - slug: newtons-first-law
+    category: education
+    triggers: ["newton first law", "first law of motion", "law of inertia"]
+    answer: "Newton's first law: an object stays at rest or moves at constant speed in a straight line unless an unbalanced force acts on it."
+    direct_reply: true
+    reviewed: false
+    source: "NASA Glenn Research Center https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/newtons-laws-of-motion/ (at rest or constant speed in a straight line unless acted on by an unbalanced force). Accessed 2026-10-17."

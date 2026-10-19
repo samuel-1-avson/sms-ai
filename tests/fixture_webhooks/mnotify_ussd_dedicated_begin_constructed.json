@@ -1,0 +1,9 @@
+{
+  "_note": "Constructed, not copied from mNotify: the dedicated request example with the dialled short code as text, which is a guess at what the first request of a session holds. Session id and number are invented.",
+  "shortCode": "*123#",
+  "msIsdn": "233541509394",
+  "text": "*123#",
+  "sessId": "SESS-0001",
+  "ussdGwId": "MTN",
+  "language": "en"
+}
