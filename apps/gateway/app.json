@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "SMS AI Gateway",
+    "slug": "smsai-gateway",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "gh.smsai.gateway",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "The camera scans the pairing QR code from your server.",
+          "recordAudioAndroid": false
+        }
+      ]
+    ],
+    "platforms": [
+      "android"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "be077da3-f3e9-4b7a-ba69-c6b07777e002"
+      }
+    },
+    "owner": "an0n-xen"
+  }
+}

@@ -1,10 +1,9 @@
 # Local development stack. From the repository root:
 #   docker compose -f deployments/compose.yaml up --build        # postgres + api + worker
 #   docker compose -f deployments/compose.yaml --profile test run --rm test
-#   docker compose -f deployments/compose.yaml --profile test-race run --rm test-race
-#   docker compose -f deployments/compose.yaml --profile load run --rm load   # see tests/load/README.md
+#   docker compose -f deployments/compose.yaml --profile tunnel up -d tunnel   # public HTTPS URL for the phone
 #   docker compose -f deployments/compose.yaml --profile monitoring up -d prometheus
-# Simulator: http://localhost:8088/simulator
+# Simulator (PRIMARY_SMS_PROVIDER=mock): http://localhost:8088/simulator
 name: smsai
 
 x-app-env: &app-env
@@ -35,7 +34,7 @@ services:
       context: ..
       dockerfile: deployments/docker/Dockerfile
     image: smsai-ghana:dev
-    command: ["/app/api"]
+    command: ["node", "--enable-source-maps", "dist/api.js"]
     env_file:
       - path: ../.env
         required: false
@@ -48,7 +47,7 @@ services:
 
   worker:
     image: smsai-ghana:dev
-    command: ["/app/worker"]
+    command: ["node", "--enable-source-maps", "dist/worker.js"]
     env_file:
       - path: ../.env
         required: false
@@ -59,64 +58,35 @@ services:
       api:
         condition: service_started
 
-  # Runs unit + integration tests against the postgres service.
+  # Cloudflare quick tunnel: prints a public https://….trycloudflare.com URL
+  # for the API (`docker compose ... logs tunnel`). Put it in GATEWAY_PUBLIC_URL
+  # and pair the phone with `admin gateway-pair`. A quick tunnel's URL changes
+  # on every start; use a named tunnel (TUNNEL_TOKEN) for a stable one.
+  tunnel:
+    profiles: ["tunnel"]
+    image: cloudflare/cloudflared:latest
+    command: ["tunnel", "--no-autoupdate", "--url", "http://api:8080"]
+    depends_on:
+      - api
+
+  # Unit + integration tests against the postgres service.
   test:
     profiles: ["test"]
-    image: golang:1.24-alpine
+    image: node:22-alpine
     working_dir: /src
+    # The host's node_modules (possibly Windows builds) are masked by container-only volumes.
     volumes:
       - ..:/src
-      - gomod:/go/pkg/mod
-      - gocache:/root/.cache/go-build
+      - test_node_modules:/src/node_modules
+      - /src/packages/shared/node_modules
+      - /src/apps/server/node_modules
+      - /src/apps/gateway/node_modules
     environment:
-      GOTOOLCHAIN: local
-      GOFLAGS: -buildvcs=false
       SMSAI_TEST_DATABASE_URL: postgres://smsai:smsai_dev_password@postgres:5432/postgres?sslmode=disable
-    command: ["go", "test", "-p", "1", "-count=1", "./..."]
+    command: ["sh", "-c", "corepack enable && pnpm config set store-dir /root/.pnpm-store && pnpm install --frozen-lockfile --filter '@smsai/server...' && pnpm --filter @smsai/shared --filter @smsai/server test"]
     depends_on:
       postgres:
         condition: service_healthy
-
-  # The same suite under the race detector, which needs cgo (glibc image).
-  # Its databases get a suffix so it can run alongside the test service.
-  test-race:
-    profiles: ["test-race"]
-    image: golang:1.24-bookworm
-    working_dir: /src
-    volumes:
-      - ..:/src
-      - gomod:/go/pkg/mod
-      - gocache-race:/root/.cache/go-build
-    environment:
-      GOTOOLCHAIN: local
-      GOFLAGS: -buildvcs=false
-      CGO_ENABLED: "1"
-      SMSAI_TEST_DATABASE_URL: postgres://smsai:smsai_dev_password@postgres:5432/postgres?sslmode=disable
-      SMSAI_TEST_DB_SUFFIX: _race
-    command: ["go", "test", "-race", "-p", "1", "-count=1", "./..."]
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # Load generator against the running api service (tests/load/README.md).
-  # Flags go after the service name, e.g. `run --rm load -rate 50 -duration 2m`.
-  load:
-    profiles: ["load"]
-    image: golang:1.24-alpine
-    working_dir: /src
-    volumes:
-      - ..:/src
-      - gomod:/go/pkg/mod
-      - gocache:/root/.cache/go-build
-    # MOCK_WEBHOOK_SECRET and ADMIN_API_TOKEN come from the same file as the api's.
-    env_file:
-      - path: ../.env
-        required: false
-    environment:
-      GOTOOLCHAIN: local
-      GOFLAGS: -buildvcs=false
-      LOAD_TARGET: http://api:8080
-    entrypoint: ["go", "run", "./tests/load"]
 
   prometheus:
     profiles: ["monitoring"]
@@ -130,6 +100,4 @@ services:
 
 volumes:
   pgdata:
-  gomod:
-  gocache:
-  gocache-race:
+  test_node_modules:

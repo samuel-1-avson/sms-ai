@@ -15,10 +15,11 @@ Examples use `https://$DOMAIN`, and the admin API needs an allowlisted IP plus
 | Recent logs | `scripts/prod-compose.sh logs --since 30m api worker` (JSON lines; no message text or phone numbers) |
 | Flags, AI breaker, key version | `curl -fsS -H "Authorization: Bearer $ADMIN_API_TOKEN" https://$DOMAIN/admin/status` |
 | Flags without HTTP | `scripts/prod-compose.sh exec -T postgres psql -U smsai -d smsai -c "SELECT * FROM system_flags"` |
-| Today's usage and spend | `scripts/prod-compose.sh exec -T api /app/admin usage` (`-day YYYY-MM-DD` for another UTC day) |
+| Today's usage and spend | `scripts/prod-compose.sh exec -T api node dist/admin.js usage` (`--day YYYY-MM-DD` for another UTC day) |
 | SQL shell | `scripts/prod-compose.sh exec postgres psql -U smsai -d smsai` |
 | Firing alerts | Grafana dashboard ("Firing alerts" table), or `scripts/prod-compose.sh exec -T alertmanager amtool --alertmanager.url=http://localhost:9093 alert query` |
 | Silence an alert | Grafana **Alerting → Silences** (source "Alertmanager"), or `scripts/prod-compose.sh exec -T alertmanager amtool --alertmanager.url=http://localhost:9093 silence add alertname=JobsFailing --duration=2h --author=<you> --comment="<why>"` |
+| Gateway phone health | `scripts/prod-compose.sh exec -T api node dist/admin.js gateway-status` |
 | Restart the app | `scripts/prod-compose.sh up -d` (recreates only what changed) or `scripts/prod-compose.sh restart api worker` |
 
 Phone numbers and message bodies are encrypted in the database. Nothing below needs them. Do not decrypt user data to
@@ -30,126 +31,89 @@ Two flags in `system_flags` stop spending without stopping the service. Use them
 
 | Flag | Off means | Users see | Still works |
 |---|---|---|---|
-| `ai_enabled` | No model calls | SMS: one "SMS AI is busy right now…" per user per day, credit refunded. USSD: the same text, session ends. | Grounding-store answers, commands (`HELP`, `MORE`, `STOP`, …) |
-| `sms_outbound_enabled` | No MT SMS is sent | SMS users get no reply. USSD: answers too slow for the screen and "Save to SMS" get "SMS answers are paused…". | USSD answers shown inline on the screen |
+| `ai_enabled` | No model calls | One "SMS AI is busy right now…" per user per day, credit refunded | Grounding-store answers, commands (`HELP`, `MORE`, `STOP`, …) |
+| `sms_outbound_enabled` | No reply is handed to the phone | No reply | Inbound texts are still stored |
 
 ```bash
-scripts/prod-compose.sh exec -T api /app/admin flag ai_enabled false
-scripts/prod-compose.sh exec -T api /app/admin flag sms_outbound_enabled false
+scripts/prod-compose.sh exec -T api node dist/admin.js flag ai_enabled false
+scripts/prod-compose.sh exec -T api node dist/admin.js flag sms_outbound_enabled false
 # or over HTTP (takes effect in the API immediately):
 curl -fsS -X POST -H "Authorization: Bearer $ADMIN_API_TOKEN" -d '{"ai_enabled": false}' https://$DOMAIN/admin/flags
 ```
 
 - Changes take effect within 3 seconds; each process caches flags that long. The kill-switch change is logged at WARN.
-- With only `sms_outbound_enabled=false`, SMS questions are still answered by the model (AI spend continues), but the
+- With only `sms_outbound_enabled=false`, questions are still answered by the model (AI spend continues), but the
   replies are marked `blocked_disabled` and **not sent later**. To stop all spend, turn off both.
 - Turn a flag back on with `true`. Nothing queued while it was off is replayed.
-- Last resort: `scripts/prod-compose.sh stop api worker`. Caddy then answers webhooks with 502 and users get nothing.
+- To stop the phone sending without touching the server, use **Pause replies** in the gateway app: replies wait on the
+  server (up to `GATEWAY_OUTBOX_TTL_SECONDS`) and go out when you resume.
+- Last resort: `scripts/prod-compose.sh stop api worker`. The phone keeps every text it receives and forwards it when the
+  API is back.
 
-## Spend cap hit
+## Gateway phone offline
 
-Alerts: `DailySpendAbove80Percent` (warning), `DailySpendCapReached` (critical).
+Alerts: `GatewayPhoneOffline` (no heartbeat for 5 minutes), `GatewayRepliesExpired` (replies given up after
+`GATEWAY_OUTBOX_TTL_SECONDS`, default 6 h). The phone is the only way texts come in and replies go out, so while it is
+offline nobody gets answers. Nothing is lost on the phone: texts it receives while offline are saved and forwarded
+later. Replies wait on the server until the TTL, then are marked `failed` (`phone_offline`) and their segments refunded.
 
-The worker estimates spend today as SMS segments × `SMS_SEGMENT_COST_USD` plus model tokens priced with `LLM_PRICES`.
-At `GLOBAL_DAILY_SPEND_CAP_USD`:
+1. Look at the phone. The persistent notification says "SMS AI gateway is running" or names the problem. Open the app:
+   **Status** shows the last contact time and the last error, **Recent activity** the last events.
+2. Match the error:
+   - *Server refused the pairing (401)*: the device secret no longer matches `GATEWAY_DEVICE_SECRET` (rotated without
+     re-pairing). Re-pair: `scripts/prod-compose.sh exec api node dist/admin.js gateway-pair`, then **Setup → Unpair**
+     and scan the new code.
+   - *UnknownHostException / ConnectException / SocketTimeoutException*: no data on the phone, or the server is down.
+     Check `/healthz`, Wi-Fi or mobile data, and the data bundle.
+   - No notification at all: the service was killed. Open the app (it restarts), then check **Setup → Stay awake**:
+     battery optimisation must be off, and the maker's auto-start / sleeping-apps settings must allow the app.
+3. Check the phone is charging, has signal, and has airtime or an SMS bundle (`sim_label`, `battery` and `signal` are in
+   `/admin/status` → `gateway.devices` from its last heartbeat).
+4. `scripts/prod-compose.sh exec -T api node dist/admin.js gateway-status` shows the last heartbeat and the outbox
+   counts for the last day.
+5. A reboot of the phone is safe: the service starts again on boot, and the local queues survive.
 
-- model calls stop: answer jobs end as `ai_unavailable`, and users get the "busy" text once a day;
-- outbound SMS that would cross the cap are blocked (`blocked_cap`);
-- USSD answers from the grounding store still work.
+## Gateway acked but no status
 
-`GLOBAL_DAILY_SMS_SEGMENT_CAP` blocks SMS the same way. Everything resets at 00:00 UTC.
+Alert: `GatewayRepliesUnconfirmed`. The phone took a reply (acknowledged it) more than `GATEWAY_ACK_TIMEOUT_SECONDS` ago
+but never reported it sent or failed. The usual cause is the app being killed between handing the text to the radio and
+hearing back, so the reply may or may not have gone out. The service never resends these automatically, to avoid
+duplicate texts.
 
-1. Find where the money went: `scripts/prod-compose.sh exec -T api /app/admin usage`, and the dashboard's "Spend and
-   quotas" and "Outbound SMS" rows.
-2. Look for abnormal traffic: one carrier or one burst in "Inbound per minute", a high UCS-2 share (UCS-2 costs up to
-   3× the segments of GSM-7), many multi-segment answers, or a wrong `LLM_PRICES` entry inflating the estimate. Each
-   number is capped at `DAILY_PER_NUMBER_FREE_CAP` questions a day, so a spike means many numbers.
-3. Decide:
-   - **Expected growth:** raise `GLOBAL_DAILY_SPEND_CAP_USD` (and `GLOBAL_DAILY_SMS_SEGMENT_CAP` if needed) in
-     `deployments/.env.prod`, then run `scripts/prod-compose.sh up -d`. This recreates `api` and `worker`, with a few
-     seconds of 502s. The dashboards pick up the new cap within a minute.
-   - **Abuse or a bug:** leave the cap. Turn off `ai_enabled` if the traffic continues after midnight. Investigate
-     before raising anything.
-4. Note the cause in the pilot log. The pilot's go/no-go relies on measured unit economics (plan §15 week 6).
+1. Open the app's **Recent activity**: a "Reply to +233…" line at that time means the phone did try to send it.
+2. List the affected replies (no content):
+
+   ```sql
+   SELECT message_id, acked_at, offered_count FROM gateway_outbox
+   WHERE state = 'acked' AND stale_flagged ORDER BY acked_at DESC;
+   ```
+
+3. Usually do nothing: the user can text again. Many at once means the phone's process is being killed; fix that as in
+   [gateway phone offline](#gateway-phone-offline), step 2.
 
 ## Provider outage
 
-### SMS/USSD provider (mNotify)
+### The SIM or the network
 
-Signs: `SMSOutboundUnknownTimeout`, `JobsFailing` with `send_failed`, a rising `retryable` series in "Failed or
-blocked sends", or USSD inbound dropping to zero in "Inbound per minute by channel". mNotify is the only provider for both
-USSD and SMS, so an mNotify problem stops the whole service.
+Signs: the phone is online (heartbeats arrive) but replies end `failed`, with errors such as `no_service`,
+`radio_off` or `generic_failure` in the app's activity log, or texts stop arriving while the phone looks healthy.
 
-1. Confirm it is mNotify. Check the worker log for send errors
-   (`scripts/prod-compose.sh logs --since 15m worker | grep -i mnotify`). The log line and `send_attempts.error` carry
-   mNotify's own words (digit runs masked, never the API key). How the adapter sorts failures:
-   - *Retried* (nothing was accepted; points at our account or configuration, not an outage): HTTP 401, 403, 404, 405,
-     407, 408 and 429, any redirect, and messages about the API key. 401/403 means the key was rotated or revoked or the
-     account is suspended, 404 or a redirect means a wrong `MNOTIFY_BASE_URL`, 429 a rate limit.
-   - *Failed for good* (`send` / `failed`, never retried): the sender ID is not registered or approved
-     (`admin mnotify-sender-status`), the balance is too low (top up; `admin mnotify-status -check-credentials` shows it),
-     or the number was rejected. Messages that failed this way are not resent afterwards.
-   - *Unknown outcome* (`unknown_timeout`): timeouts, dropped connections, `5xx`, and `2xx` answers the adapter cannot read.
-     See [unknown-timeout sends](#unknown-timeout-sends).
-
-   `scripts/prod-compose.sh exec api /app/admin mnotify-status -check-credentials` separates a key or account problem from an
-   outage with one call. The OpenAPI file documents no error codes, so a new kind of error text means tightening the
-   classification in `internal/channel/mnotify/sms.go`: tell the developers. This runbook knows no public status page for
-   mNotify: ask support@mnotify.com or +233 54 150 9394, and check whether `/healthz` and the other dashboards look normal.
-2. If sends keep failing, turn off `sms_outbound_enabled` to stop retries and segment reservations. The affected
-   replies are not resent later. USSD inline answers keep working if USSD ingress is up.
-3. If USSD ingress is down, nothing reaches us and there is nothing to switch on our side. Tell the pilot users through
-   your agreed channel. If USSD traffic stopped right after a token rotation, a redeploy to another host or a change at
-   mNotify, see [webhook rejections](#webhook-rejections) instead. mNotify's callback URL is registered by mNotify (dashboard
-   or support; there is no API for it), so a lost or changed registration is fixed there.
-4. When mNotify recovers, turn `sms_outbound_enabled` back on and watch "Submitted per hour" recover. Then handle any
-   [unknown-timeout sends](#unknown-timeout-sends). With no delivery reports, "submitted" means mNotify accepted the message,
-   not that a phone got it: for a doubtful stretch compare the mNotify dashboard's delivery report with the `submitted` rows.
-
-### MTN provider (dormant)
-
-Not in use: the owner chose mNotify on 2026-10-18 (see [PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md)). The steps below
-apply only if `PRIMARY_*_PROVIDER=mtn` is ever set again.
-
-
-Signs: `SMSOutboundUnknownTimeout`, `JobsFailing` with `send_failed`, a rising `retryable` series in "Failed or
-blocked sends", or USSD inbound dropping to zero in "Inbound per minute by channel". MTN is the only provider for both
-USSD and SMS, and only for MTN subscribers, so an MTN problem stops the whole service.
-
-1. Confirm it is MTN. Check the worker log for send errors
-   (`scripts/prod-compose.sh logs --since 15m worker | grep -i mtn`). The adapter retries HTTP 401, 402, 403, 404 and 429
-   (and a failed token request), but those point at our account or configuration, not an outage: 401 means the
-   `MTN_CLIENT_ID`/`MTN_CLIENT_SECRET` pair or a revoked app (the log line says "token request answered HTTP 401" when the
-   token endpoint itself refused), 403 an unapproved service code, sender ID or app (MTN's canonical code `6000`/`6001`
-   means billing or balance), 404 a wrong `MTN_BASE_URL`, 429 a rate limit (`1013`/`3006`). `5xx` answers are logged as
-   uncertain, not retried: see [unknown-timeout sends](#unknown-timeout-sends). `scripts/prod-compose.sh exec api
-   /app/admin mtn-status -check-credentials` separates a credential problem from an outage with one token request. Then
-   check MTN's status page (<https://madapi.statuspage.io/>, linked from developers.mtn.com "Getting help") and whether `/healthz` and the other
-   dashboards look normal. MTN may also suspend developer access without notice (its terms say so): ask MTN.
-   The selected products are SMS V2 + OAuth V1 and MTN USSD interface. SMS defaults to OAuth, USSD registration to
-   `x-api-key`; `MTN_SMS_SEND_API_KEY` and `MTN_USSD_SEND_BEARER` add the other credential only after MTN/sandbox confirmation.
-2. If sends keep failing, turn off `sms_outbound_enabled` to stop retries and segment reservations. The affected
-   replies are not resent later. USSD inline answers keep working if USSD ingress is up.
-3. If USSD ingress is down, nothing reaches us and there is nothing to switch on our side. Tell the pilot users through
-   your agreed channel. If USSD traffic stopped right after a token rotation, a redeploy to another host or a change at
-   MTN, see [webhook rejections](#webhook-rejections) instead. If MTN's subscription was lost or removed, re-register
-   with `admin mtn-subscribe` (it needs `MTN_CALLBACK_BASE_URL`; MTN cannot list subscriptions, so check the ids in the
-   env file with `admin mtn-status`). SMS V2 registers `notifyUrl` per `SMS_OUTBOUND_SENDER_ID`, with
-   `MTN_COUNTRY_CODE` in `x-country-code` (default `GH`, format unconfirmed). Keep the original sender when removing it.
-4. When MTN recovers, turn `sms_outbound_enabled` back on and watch "Submitted per hour" recover. Then handle any
-   [unknown-timeout sends](#unknown-timeout-sends).
+1. Check the phone has signal and airtime/bundle. A `generic_failure` on every send often means no credit.
+2. If the network flagged the SIM for sending many automated texts, sends fail or the line is barred: call the network.
+   Keep `GLOBAL_DAILY_SMS_SEGMENT_CAP` modest and the app's sending pace at 2 s or more.
+3. If Android shows "This app is sending a large number of SMS messages" on the phone, the outgoing SMS limit was not
+   lifted: run `adb shell settings put global sms_outgoing_check_max_count 100000` (apps/gateway/README.md).
 
 ### AI provider (DeepInfra)
 
-Signs: `ai_requests_total` with error statuses, `"ai_breaker":"open"` in `/admin/status` or `/readyz`, latency above
-the 3.2 s USSD deadline, and more USSD SMS fallbacks.
+Signs: `ai_requests_total` with error statuses, `"ai_breaker":"open"` in `/admin/status` or `/readyz`, slow answers.
 
 The AI client already retries, falls back to `LLM_FALLBACK_MODEL` and opens a circuit breaker. While the breaker is
 open, users get the "busy" text once a day and their credit back.
 
 1. Check DeepInfra's status page. Check for HTTP 401/402 in the worker log, which mean a key or billing problem.
-2. If one model is down but DeepInfra is up, point `LLM_MODEL`/`LLM_FALLBACK_MODEL` at another benchmarked model
-   (README "Benchmarking models"), then run `scripts/prod-compose.sh up -d`.
+2. If one model is down but DeepInfra is up, point `LLM_MODEL`/`LLM_FALLBACK_MODEL` at another model, then run
+   `scripts/prod-compose.sh up -d`.
 3. If the outage is long, turn `ai_enabled` off so questions get one clear notice instead of retries. Grounding answers
    continue. Turn it back on when DeepInfra recovers.
 
@@ -160,87 +124,29 @@ visible text. Plan §7.2 requires this to stay at zero. The user got the fallbac
 
 1. Check `LLM_REASONING_EFFORT=low` and `LLM_MAX_OUTPUT_TOKENS` in the env file. gpt-oss needs at least 350, and the
    client enforces that.
-2. Check which `model` label is affected. The reasoning model `openai/gpt-oss-20b` is primary because it fit the 3.2 s
-   USSD deadline in 99% of benchmark answers (Llama: 70%; DeepInfra benchmark, 2026-10-17). If it keeps returning
-   empty answers, swap `LLM_MODEL` and `LLM_FALLBACK_MODEL` so the non-reasoning
-   `meta-llama/Llama-3.3-70B-Instruct-Turbo` answers first, then run `scripts/prod-compose.sh up -d`. Expect more
-   USSD answers to fall back to SMS (`ussd_async_sms_fallback_total`), which costs SMS segments.
-3. Re-run the benchmark before changing models (README "Benchmarking models"); its exit criterion is `empty = 0`.
+2. If `openai/gpt-oss-20b` keeps returning empty answers, swap `LLM_MODEL` and `LLM_FALLBACK_MODEL` so the
+   non-reasoning `meta-llama/Llama-3.3-70B-Instruct-Turbo` answers first, then run `scripts/prod-compose.sh up -d`.
 
 ## Webhook rejections
 
-Alert: `WebhookRejectedSpike`, labelled with `provider` and `reason`. mNotify has one callback, the USSD session URL
-(`/webhooks/ussd/mnotify/session`); it documents no delivery-report or inbound-SMS webhook.
+Alert: `WebhookRejectedSpike`, labelled with `provider` and `reason`. For `provider="gateway"` these are requests to
+`/gateway/v1/*`.
 
-- **`reason="signature"`.** mNotify authenticates nothing, so this means the callback's `?token=` was missing or wrong, or
-  the caller is outside `MNOTIFY_USSD_ALLOWED_IPS` when that is set. Either someone is sending forged requests (they are
-  rejected, so no harm is done), or the URL mNotify calls no longer matches our token:
-  - Did someone just rotate `MNOTIFY_USSD_TOKEN`? Compare the env file with what mNotify was told. `admin mnotify-status`
-    shows whether tokens are set but never prints one; the full URL lives only in mNotify's configuration and in your
-    password manager. During a rotation both tokens must be listed, new first
-    ([DEPLOYMENT.md §6](DEPLOYMENT.md#6-key-and-secret-rotation)). If the registered token is no longer in the env file, ask
-    mNotify to register the current URL.
-  - Did every callback fail from the first day? mNotify may strip the query string from registered URLs, which this design
-    cannot work with ([PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md), "Not confirmed" item 3). Ask mNotify whether it
-    keeps `?token=`; the fix is a code change that moves the token into the path.
-  - Are the rejections only from mNotify's addresses? If `MNOTIFY_USSD_ALLOWED_IPS` is set and mNotify changed its
-    source addresses, legitimate callbacks fail: empty the setting until you know the new ranges.
-  - Is legitimate traffic dropping at the same time? If so, users are affected. Fix the token first.
-  - Has the token leaked? Rotate it: the USSD URL lets anyone drive sessions as any phone number.
-  - For a flood of forged requests from a few addresses, block them in the cloud firewall.
-- **`reason="payload"`.** mNotify sent a body we cannot use: a shared-USSD request without `msisdn`, `sequenceID` and `data`,
-  a dedicated one without `msIsdn`, `sessId` and `text`, a body mixing both shapes, a shape that `MNOTIFY_USSD_MODE` pins
-  away, or anything posted to `/webhooks/sms/mnotify/*` (nothing is accepted there). Check the API log for `webhook
-  rejected` lines. The payloads follow mNotify's OpenAPI file, but several details are unconfirmed (dedicated `text`,
-  session ids), so expect differences during the first tests. Compare with
-  [PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md) and the `mnotify_*` fixtures in `tests/fixture_webhooks`.
-- **Dormant providers.** The same two reasons apply to the MTN, Hubtel and Arkesel adapters with their own tokens
-  (`MTN_USSD_TOKEN`, `MTN_DLR_TOKEN`, ...), if one of them is ever selected again; `admin mtn-status` and
-  `admin mtn-subscribe` then take the place of the mNotify steps above.
+- **`reason="signature"`.** The request was not signed with a current `GATEWAY_DEVICE_SECRET`, or its timestamp is more
+  than 5 minutes off. Either someone is sending forged requests (they are rejected, so no harm is done), or:
+  - The secret was rotated without re-pairing the phone. During a rotation list both values, new first, re-pair, then
+    drop the old one.
+  - The phone's clock is wrong. Turn on automatic date and time on the phone.
+  - If the secret may have leaked, rotate it: whoever holds it can read queued replies and inject texts.
+- **`reason="payload"`.** The app sent a body the server does not accept: usually an app and server from different
+  versions of `packages/shared`. Update both.
 
 ## Unknown-timeout sends
 
-Alert: `SMSOutboundUnknownTimeout`. The provider did not answer a send in time (or answered in a way that does not say
-whether the SMS was accepted), so we do not know whether it went out. The service never resends these automatically, to
-avoid double-billing and duplicate texts.
+Alert: `SMSOutboundUnknownTimeout`. With the gateway this should not happen: handing a reply to the phone is a database
+insert, which either succeeds or is retried. The phone-side equivalent is [acked but no status](#gateway-acked-but-no-status).
+If the alert fires, look for database errors in the worker log.
 
-**mNotify sends cannot be looked up by our reference.** The Quick SMS request has no client reference or idempotency field,
-and the only handle on a send, the campaign id, comes in the response that was lost. The adapter therefore does not
-implement a status lookup (`channel.StatusQuerier`), and the reconciler leaves these attempts `unknown_timeout` until an
-operator acts ([PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md)). A lookup that found nothing would be indistinguishable
-from report lag, and a wrong "not found" would resend a billed SMS. The unknown outcomes are timeouts, dropped
-connections, every `5xx`, and `2xx` answers that are unreadable or do not say success or failure clearly.
-
-1. Count them and check that the count is not growing:
-
-   ```sql
-   SELECT provider_name, date_trunc('hour', created_at) AS hour, count(*)
-   FROM send_attempts WHERE status = 'unknown_timeout'
-   GROUP BY 1, 2 ORDER BY 2 DESC;
-   ```
-
-2. Many at once points to a [provider outage](#smsussd-provider-mnotify). A few spread out are usually slow
-   provider responses.
-3. **Check the mNotify dashboard report** (log in at <https://app.bms.africa/>, the delivery or sent-messages report for the
-   day), because the database cannot say: phone numbers and bodies are encrypted. List the attempts and their times, and
-   look for messages in the dashboard around those times:
-
-   ```sql
-   SELECT a.id, a.created_at, left(a.error, 160) AS error
-   FROM send_attempts a WHERE a.status = 'unknown_timeout'
-   ORDER BY a.created_at DESC;
-   ```
-
-   A message the dashboard shows was accepted and billed; its row stays `unknown_timeout`, and nothing will update it
-   because mNotify sends no delivery reports. A time with nothing in the dashboard (and the error text, which is mNotify's
-   own words without the API key) is the evidence for "not sent". Contact support@mnotify.com (+233 54 150 9394) if
-   many cluster in one period.
-4. Usually do nothing: the user can text again or ask on USSD. There is no admin command yet to mark these resolved or
-   resend them.
-
-**Dormant providers.** The MTN adapter has an optional lookup by our client reference (`MTN_SMS_LOOKUP_BY_CLIENT_REF`,
-undocumented, off by default); Arkesel and Hubtel have none. The rule is the same: a failed or negative lookup never
-permits a resend.
 ## Failing jobs
 
 Alert: `JobsFailing`, labelled with `kind` and `result`.

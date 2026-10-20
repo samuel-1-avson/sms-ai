@@ -28,7 +28,7 @@ groups:
           runbook: docs/RUNBOOKS.md#ai-empty-reasoning-responses
 
       # Only the worker's gauge: the worker refreshes it every minute, and the
-      # api only sets it when it answers a USSD question, so the api's value can
+      # api only sets it when it answers a question, so the api's value can
       # still hold yesterday's spend.
       - alert: DailySpendAbove80Percent
         expr: |
@@ -70,7 +70,7 @@ groups:
           severity: warning
         annotations:
           summary: "{{ $value | humanize }} {{ $labels.provider }} webhooks rejected ({{ $labels.reason }}) in 10 min"
-          description: "Forged requests, or a webhook secret/USSD token that no longer matches the provider's settings."
+          description: "Forged requests, or a gateway device secret that no longer matches the phone's pairing."
           runbook: docs/RUNBOOKS.md#webhook-rejections
 
       - alert: SMSOutboundUnknownTimeout
@@ -189,3 +189,44 @@ groups:
         annotations:
           summary: "Only {{ $value | humanizePercentage }} space left on {{ $labels.device }}; Postgres stops when its disk is full"
           runbook: docs/RUNBOOKS.md#disk-space
+
+      # The gateway phone heartbeats every minute; both the api (on each
+      # heartbeat) and the worker (from the database) export the timestamp.
+      - alert: GatewayPhoneOffline
+        expr: time() - max(gateway_last_seen_timestamp_seconds) > 300
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The gateway phone has not checked in for {{ $value | humanizeDuration }}"
+          description: >-
+            Texts to the gateway number are not being answered. Replies wait on the server for
+            GATEWAY_OUTBOX_TTL_SECONDS, then are given up.
+          runbook: docs/RUNBOOKS.md#gateway-phone-offline
+
+      - alert: GatewayRepliesExpired
+        expr: |
+          sum(
+              (gateway_outbox_expired_total unless gateway_outbox_expired_total offset 15m)
+            or
+              increase(gateway_outbox_expired_total[15m])
+          ) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanize }} replies were given up because the phone never collected them"
+          runbook: docs/RUNBOOKS.md#gateway-phone-offline
+
+      - alert: GatewayRepliesUnconfirmed
+        expr: |
+          sum(
+              (gateway_outbox_stale_total unless gateway_outbox_stale_total offset 15m)
+            or
+              increase(gateway_outbox_stale_total[15m])
+          ) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanize }} replies were taken by the phone but never reported sent"
+          description: "Never resent automatically. Check the phone's activity log before resending by hand."
+          runbook: docs/RUNBOOKS.md#gateway-acked-but-no-status

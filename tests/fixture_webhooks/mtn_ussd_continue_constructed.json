@@ -1,8 +1,0 @@
-{
-  "_note": "Constructed, not copied from MTN: messageType 1 (Continue) with the user's latest entry as ussdString. Whether MTN sends the latest entry or the accumulated '1*2*text' string is not documented (MTN_USSD_INPUT_IS_HISTORY).",
-  "sessionId": "9a3c0e51b5b64f0f",
-  "messageType": "1",
-  "msisdn": "233541234567",
-  "serviceCode": "*713*1#",
-  "ussdString": "What is photosynthesis?"
-}

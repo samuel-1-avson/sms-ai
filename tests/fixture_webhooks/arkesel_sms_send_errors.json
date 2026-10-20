@@ -1,7 +1,0 @@
-{
-  "401": {"message": "Invalid key", "status": "error"},
-  "402": {"status": "error", "message": "Insufficient balance or invalid coverage!"},
-  "403": {"status": "error", "message": "Inactive SMS Gateway!"},
-  "422": {"status": "error", "message": "The message field is required."},
-  "500": {"status": "error", "message": "SMS request failed!"}
-}

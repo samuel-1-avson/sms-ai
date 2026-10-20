@@ -1,6 +1,0 @@
-{
-  "_note": "ASSUMED shape, not copied from Hubtel: the docs that could be read say a delivery report is requested with RegisteredDelivery and that ClientReference is echoed in it, but print no callback payload. Delivery statuses are the ones in Hubtel's report table.",
-  "MessageId": "f2665231-522f-32b6-accf-6ac8426bfd5c",
-  "Status": "Delivered",
-  "ClientReference": "msg-1"
-}

@@ -11,7 +11,7 @@ incidents are in [RUNBOOKS.md](RUNBOOKS.md).
 | Service | Image | Role | Reachable from |
 |---|---|---|---|
 | `caddy` | `caddy:2.10.2-alpine` | TLS with automatic Let's Encrypt certificates, routing, IP allowlist | Internet: **80 and 443 only** |
-| `api` | `smsai-ghana:<tag>` (built on the VM) | Webhooks, admin API, `/metrics` | Caddy |
+| `api` | `smsai-ghana:<tag>` (built on the VM) | The phone gateway protocol, admin API, `/metrics` | Caddy |
 | `worker` | same image | Jobs, SMS dispatch, maintenance, `/metrics` on :9091 | Prometheus |
 | `migrate` | same image | Runs `admin migrate` and exits; `api` and `worker` wait for it | — |
 | `postgres` | `postgres:16-alpine` | Database (`pgdata` volume) | Internal only |
@@ -25,34 +25,24 @@ Caddy routes:
 
 | Path | Goes to | Who can reach it |
 |---|---|---|
-| `/webhooks/*` | api | Anyone. The app checks each callback's token (mNotify authenticates nothing). Caddy overwrites `X-Real-IP` with the caller's address. |
+| `/gateway/*` | api | Anyone. Every request must carry the device secret's HMAC signature (`GATEWAY_DEVICE_SECRET`). |
 | `/healthz` | api | Anyone (for an external uptime monitor) |
 | `/admin/*`, `/metrics`, `/readyz` | api | `OPS_ALLOWED_CIDRS` only (others get 403), and then the bearer tokens |
 | `/grafana/*` | grafana | `OPS_ALLOWED_CIDRS` only, and then the Grafana login |
 | anything else | 404 | The development simulator is never exposed |
 
 Networks: `backend` and `ops` are Docker `internal` networks with no route to the internet. Postgres, Prometheus,
-Grafana and node-exporter sit only on those. `api`, `worker` (DeepInfra, mNotify), `caddy` (ACME) and `alertmanager`
+Grafana and node-exporter sit only on those. `api`, `worker` (DeepInfra), `caddy` (ACME) and `alertmanager`
 (notifications) also join `public`, which has egress.
 
-Caddy writes no access log on purpose: mNotify's USSD callback token travels in the query string
-([PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md)). The API logs method, path, status and latency without query
-strings. mNotify's API key is also in a query string, but only on outbound calls (`https://api.mnotify.com/api/...?key=`)
-that never pass through Caddy; the app never logs those URLs either.
+Caddy writes no access log; the API logs method, path, status and latency itself, never bodies or phone numbers.
 
-The SMS/USSD provider is **mNotify** (mnotify.com, API host `api.mnotify.com`): its **Quick SMS** API sends the answers and
-its **shared or dedicated USSD** product delivers the sessions, so one account and one API key serve both. The owner
-chose it on 2026-10-18 after MTN's own developer platform failed (two OAuth 401s, and production access that needs a
-registered company). The MTN, Hubtel and Arkesel adapters are still in the code but dormant, and nothing in this guide
-uses them.
-
-**Read the provider caveats before planning a launch date.** The adapter is built from mNotify's public OpenAPI file and
-has never run against mNotify: there is no sandbox, the file documents no error responses, and the USSD price, how a
-short code and callback URL are provisioned, callback source addresses, the response deadline and whether an individual
-(not a company) can get a USSD code are all unpublished ([PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md), "Read this first"
-and the open list). There are **no delivery reports**: messages stay `submitted`. Start with the free signup credits and
-`sms_outbound_enabled=false`, and settle the open questions with mNotify support (support@mnotify.com, +233 54 150 9394)
-before real users depend on the service (§4).
+**SMS goes through an Android phone, not an aggregator.** People text the gateway phone's SIM. The app on that phone
+(`apps/gateway`, see its README) forwards each text to `/gateway/v1/inbound`, long-polls `/gateway/v1/outbox` for the
+replies and sends them from the same SIM. The phone needs power, signal, mobile data or Wi-Fi, and airtime or an SMS
+bundle. Every reply costs what an SMS costs on that SIM, so keep `GLOBAL_DAILY_SMS_SEGMENT_CAP` and
+`SMS_SEGMENT_COST_USD` realistic, and keep the volume modest: networks may flag a personal SIM that sends a lot of
+automated SMS.
 
 ## 2. Prepare the VM
 
@@ -101,11 +91,10 @@ scripts/init_env_prod.sh
 This builds the image (`smsai-ghana:pilot`) and writes `deployments/.env.prod` (mode 600) from
 [`deployments/env.prod.example`](../deployments/env.prod.example). It fills in these values:
 
-- `CURRENT_KEY_VERSION`, `ENCRYPTION_KEYS_V1`, `HMAC_KEYS_V1`, `ADMIN_API_TOKEN`, `METRICS_TOKEN` and
-  `MOCK_WEBHOOK_SECRET`, from `/app/admin genkey`. That runs offline in a throwaway container:
-  `docker run --rm --network none smsai-ghana:pilot /app/admin genkey`.
+- `CURRENT_KEY_VERSION`, `ENCRYPTION_KEYS_V1`, `HMAC_KEYS_V1`, `ADMIN_API_TOKEN`, `METRICS_TOKEN`,
+  `MOCK_WEBHOOK_SECRET` and `GATEWAY_DEVICE_SECRET`, from `admin genkey`. That runs offline in a throwaway container:
+  `docker run --rm --network none smsai-ghana:pilot node dist/admin.js genkey`.
 - `POSTGRES_PASSWORD` and `GRAFANA_ADMIN_PASSWORD`, as random hex.
-- `MNOTIFY_USSD_TOKEN` (48 hex characters), the shared secret in the USSD callback URL you give mNotify.
 
 Then edit every line marked `EDIT`:
 
@@ -114,25 +103,12 @@ Then edit every line marked `EDIT`:
 | `DOMAIN`, `ACME_EMAIL` | Your hostname and a monitored mailbox |
 | `OPS_ALLOWED_CIDRS` | Space-separated public IPs/CIDRs of the operators (`curl -4 ifconfig.me` from each). To reach Grafana through an SSH tunnel instead, see §9. |
 | `ALERT_SLACK_WEBHOOK_URL` | A Slack-compatible incoming webhook (§8) |
-| `MNOTIFY_API_KEY` | The API key from the mNotify dashboard (Settings > Developer, <https://app.bms.africa/settings/developer>). A secret: it is sent as `?key=` on every outbound call and the app never logs it or a request URL |
-| `SMS_ENVIRONMENT` | Stays `live`: mNotify documents no sandbox, so validation insists on `live` and every SMS is real and billed |
-| `USSD_SERVICE_CODE`, `SMS_SERVICE_ID`, `SMS_OUTBOUND_SENDER_ID` | The USSD code mNotify provisions (shared or dedicated) and a sender ID mNotify has approved for your account (1-11 characters; `admin mnotify-sender-status` shows Pending or Approved) |
-| `MNOTIFY_USSD_MODE` | `auto` (the template) serves both USSD payload shapes on one route; `shared` or `dedicated` pins one and refuses the other |
-| `MNOTIFY_USSD_ALLOWED_IPS` | Optional. mNotify's callback source addresses are not published; fill it in if they tell you |
+| `GATEWAY_PHONE_NUMBER` | The gateway SIM's own number, so texts from it are never answered |
+| `GATEWAY_PUBLIC_URL` | `https://<DOMAIN>`: the address printed in the pairing QR code |
 | `DEEPINFRA_API_KEY`, `LLM_PRICES` | From DeepInfra; check current prices |
 
-`MNOTIFY_USSD_TOKEN` is already generated; leave it. mNotify documents no callback authentication, so this token in the
-callback URL is the only proof that a callback came from mNotify (§4).
-
-**Still needed before the pilot:** an mNotify account and its API key (the free signup includes 10 SMS credits; bundles
-cost about GHS 0.028-0.031 per SMS), an approved sender ID, a USSD code and mNotify's quote for it, and an answer to
-whether an individual account can get them. The adapter is built from mNotify's public OpenAPI file and **not
-confirmed** against any real account; the open questions are listed in
-[PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md#not-confirmed-ask-mnotify-or-verify-with-a-real-account-before-the-pilot).
-Settle them with mNotify before real users depend on the service.
-
 Production refuses mock providers, placeholder secrets (`REPLACE_…`, `CHANGE_ME…`, `SET_AFTER…`), insecure keys and
-short tokens (`internal/config/config.go`, `Validate`). With anything wrong, `api` and `worker` exit with a list of
+short tokens (`apps/server/src/config.ts`, `validate`). With anything wrong, `api` and `worker` exit with a list of
 problems in `scripts/prod-compose.sh logs api`. Compose itself refuses to start when a deployment secret
 (`POSTGRES_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`, `METRICS_TOKEN`, `ALERT_SLACK_WEBHOOK_URL`, `DOMAIN`, …) is empty.
 
@@ -171,46 +147,21 @@ The response must show `"env":"production"` and `"insecure_dev_keys":false`. The
 review lands in the image:
 
 ```bash
-scripts/prod-compose.sh exec api /app/admin seed-grounding
+scripts/prod-compose.sh exec api node dist/admin.js seed-grounding
 scripts/prod-compose.sh restart api worker      # both processes reload the store
 ```
 
-**Provider callback (mNotify).** mNotify documents no callback authentication, so the URL carries a token. The OpenAPI file
-also does not say how a callback URL is registered, so there is no `admin` command for it: ask mNotify (dashboard or
-support@mnotify.com, +233 54 150 9394) to point your USSD service at:
-
-| Callback | URL | Registered by |
-|---|---|---|
-| USSD (shared or dedicated code) | `https://<DOMAIN>/webhooks/ussd/mnotify/session?token=<MNOTIFY_USSD_TOKEN>` | mNotify, on request or in the dashboard (not published) |
-
-Nothing else is registered: mNotify has no delivery-report or inbound-SMS webhook, so `/webhooks/sms/mnotify/*` refuses
-everything. One URL serves both USSD products; the payload shape tells the adapter which one it got (`MNOTIFY_USSD_MODE`).
-The URL is a secret: anyone holding it can drive sessions as any phone number, and mNotify stores it in full. If mNotify
-strips or rewrites the query string, the token check refuses every callback (401, `WebhookRejectedSpike`); the token would
-then have to move into the path, which needs a code change ([PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md), "Not
-confirmed" item 3). Check the account from the VM; each command makes at most one call and never prints the key:
+**Pair the phone.** Install the gateway app on the phone (apps/gateway/README.md), then print the pairing code on the VM
+and scan it in the app:
 
 ```bash
-scripts/prod-compose.sh exec api /app/admin mnotify-status                      # configuration only; secrets show as set / NOT SET
-scripts/prod-compose.sh exec api /app/admin mnotify-status -check-credentials   # ONE call, GET /balance/sms: proves the key, prints the balance
-scripts/prod-compose.sh exec api /app/admin mnotify-sender-status               # ONE call, POST /senderid/status: Pending or Approved
+scripts/prod-compose.sh exec api node dist/admin.js gateway-pair      # QR code with https://<DOMAIN> and the device secret
 ```
 
-**There is no mNotify sandbox.** Every SMS is real and billed (a new account has 10 free credits). For the first live
-checks, keep SMS off and test USSD with the team's own phones:
-
-```bash
-scripts/prod-compose.sh exec -T api /app/admin flag sms_outbound_enabled false
-# ...dial the USSD code from a team phone; inline answers work without SMS...
-scripts/prod-compose.sh exec -T api /app/admin flag sms_outbound_enabled true    # when ready to send real SMS
-```
-
-Then send one answer by SMS to a team phone and find it in the mNotify dashboard's delivery report. **Delivery reports do
-not arrive**, so messages stay `submitted` for good: during the pilot compare the dashboard report with the `submitted`
-rows, and watch the credit balance (`mnotify-status -check-credentials`; the API logs a warning below 100 credits and a
-zero balance makes sends fail permanently). Also watch `webhook_rejected_total{provider="mnotify"}` (callbacks the parser
-cannot read or that carry a wrong token) and messages in `unknown_timeout` (sends whose outcome is unknown: nothing
-resends them, see [RUNBOOKS.md](RUNBOOKS.md#unknown-timeout-sends)).
+The QR code contains the device secret: show it only on your own screen. For the first live check, text the gateway SIM
+from a team phone and watch the app's **Recent activity**, then `/admin/status` → `gateway` (the phone's last heartbeat
+and the outbox counts). Pause replies in the app, or turn `sms_outbound_enabled` off, while testing anything you do not
+want sent.
 
 **External uptime check.** Alerts come from this VM, so they stop if the VM dies. Point a free external monitor
 (UptimeRobot, Better Stack, Healthchecks) at `https://<DOMAIN>/healthz` every minute.
@@ -226,10 +177,8 @@ scripts/prod-compose.sh up -d --build
 scripts/prod-compose.sh ps && scripts/prod-compose.sh logs --tail 50 api worker
 ```
 
-`migrate` applies new migrations before `api` and `worker` restart. Caddy answers webhooks with 502 for the few
-seconds the API is down. Whether mNotify retries a callback is not documented ([PROVIDER_VALIDATION.md](PROVIDER_VALIDATION.md)),
-and a USSD session in progress may fail, so upgrade at a quiet hour. Duplicate deliveries are ignored, so
-retries are safe.
+`migrate` applies new migrations before `api` and `worker` restart. The phone gets errors for the few seconds the API
+is down and retries with backoff; it keeps every text it receives meanwhile, and duplicate deliveries are ignored.
 
 **Rollback:** set `SMSAI_IMAGE_TAG` back to the previous tag and run `scripts/prod-compose.sh up -d`. Migrations only
 go forward. If the new version changed the schema in a way the old code cannot handle, restore the pre-upgrade dump
@@ -247,13 +196,13 @@ minor releases, which are drop-in security fixes.
 Run this when a key may have leaked, when a person with access leaves, or yearly.
 
 1. Generate version 2 offline:
-   `docker run --rm --network none smsai-ghana:pilot /app/admin genkey -version 2`.
+   `docker run --rm --network none smsai-ghana:pilot node dist/admin.js genkey --version 2`.
 2. In `deployments/.env.prod`, **add** `ENCRYPTION_KEYS_V2` and `HMAC_KEYS_V2`, set `CURRENT_KEY_VERSION=2`, and
    **keep** the V1 lines. Ignore the token lines in the output unless you are rotating those too. Save the V2 keys in
    the password manager.
 3. `scripts/prod-compose.sh up -d`. Compose recreates `api` and `worker`. New writes use V2, and users with V1 lookups
    are still found and re-keyed lazily.
-4. Re-encrypt everything now: `scripts/prod-compose.sh exec api /app/admin rekey`. It prints the rows it re-encrypted.
+4. Re-encrypt everything now: `scripts/prod-compose.sh exec api node dist/admin.js rekey`. It prints the rows it re-encrypted.
    Run it again; it should report zero.
 5. Check `GET /admin/status`, which should show `"key_version":2`. Take a dump and run `scripts/restore_drill.sh`.
 6. **Keep the V1 keys while any dump made before step 4 exists**, on the VM or off-site: those dumps need V1. After
@@ -266,8 +215,8 @@ Run this when a key may have leaked, when a person with access leaves, or yearly
 |---|---|
 | `ADMIN_API_TOKEN` | New value (`openssl rand -hex 24`) in the env file, then `scripts/prod-compose.sh up -d` |
 | `METRICS_TOKEN` | Same. Compose recreates `api`, `worker` and `prometheus` together. |
-| `MNOTIFY_USSD_TOKEN` | Generate the new value (`openssl rand -hex 24`) and set `new,old` (**new first**; both are accepted), `up -d`. Ask mNotify (or use the dashboard) to change the registered callback URL to the new token (how is not published). Confirm USSD sessions still work and `webhook_rejected_total{provider="mnotify"}` stays flat, then set `new` only and `up -d`. With both tokens in the list, nothing is lost while mNotify switches |
-| `MNOTIFY_API_KEY`, `DEEPINFRA_API_KEY` | Create the new key at the provider, update the env file, `up -d`, then revoke the old key. For mNotify the key is read at process start, so the restart is the switch; a send in flight during the restart can end as `unknown_timeout` (RUNBOOKS), so pick a quiet moment. Rotate the mNotify key at once if it may have leaked (it is in the URL of every outbound call) |
+| `GATEWAY_DEVICE_SECRET` | Generate the new value (`openssl rand -hex 24`) and set `new,old` (**new first**; both are accepted), `up -d`. Run `admin gateway-pair` (it encodes the first value), unpair and re-pair the phone, check that its heartbeats arrive, then set `new` only and `up -d` |
+| `DEEPINFRA_API_KEY` | Create the new key at DeepInfra, update the env file, `up -d`, then revoke the old key |
 | `POSTGRES_PASSWORD` | `scripts/prod-compose.sh exec postgres psql -U smsai -d smsai -c "ALTER USER smsai PASSWORD '<new hex>'"`, then update the env file and `up -d`. The variable only sets the password when the data volume is first created. |
 | `GRAFANA_ADMIN_PASSWORD` | `scripts/prod-compose.sh exec grafana grafana cli admin reset-admin-password '<new>'`, then update the env file to match |
 | `ALERT_SLACK_WEBHOOK_URL` | Update the env file, `scripts/prod-compose.sh up -d alertmanager` |
@@ -322,6 +271,9 @@ names its runbook section.
 | `BackupFailed` / `BackupStale` | Last dump failed / no dump for 26 h | warning / critical |
 | `RestoreDrillStale` | No passed restore drill for 8 days | info |
 | `DiskSpaceLow` / `DiskSpaceCritical` | < 15% / < 5% free on a disk | warning / critical |
+| `GatewayPhoneOffline` | No heartbeat from the gateway phone for 5 min | critical |
+| `GatewayRepliesExpired` | Any reply given up because the phone never collected it, in 15 min | warning |
+| `GatewayRepliesUnconfirmed` | Any reply the phone took but never reported on, in 15 min | warning |
 
 The "any events" rules also catch the first event after a restart; `alerts.yml` explains how.
 
@@ -355,8 +307,7 @@ then run `scripts/prod-compose.sh up -d --force-recreate alertmanager`.
 
 ## 10. Local dry run
 
-This checks the whole stack on a workstation without public DNS, real certificates or provider accounts. It was run
-on 2026-10-17 with Docker Desktop.
+This checks the whole stack on a workstation without public DNS, real certificates or a phone.
 
 ```bash
 scripts/init_env_prod.sh /tmp/smsai-dryrun.env
@@ -367,9 +318,7 @@ Then set these in that file:
 ```text
 APP_ENV=staging                  # staging allows the mock gateway and model
 PRIMARY_SMS_PROVIDER=mock
-PRIMARY_USSD_PROVIDER=mock
 LLM_PROVIDER=mock
-SMS_SERVICE_ID=SIM-SHORTCODE
 MOCK_DLR_CALLBACK_URL=http://api:8080/webhooks/sms/mock/status
 DOMAIN=localhost
 CADDY_GLOBAL_OPTIONS=local_certs   # Caddy's own CA, no ACME

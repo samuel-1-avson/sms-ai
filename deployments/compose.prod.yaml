@@ -27,7 +27,7 @@ x-app-env-file: &app-env-file
     required: true
 
 # These override the env file. APP_ENV defaults to production, where
-# config.Validate refuses mock providers, insecure keys and missing tokens.
+# validate() refuses mock providers, insecure keys and missing tokens.
 x-app-env: &app-env
   APP_ENV: ${APP_ENV:-production}
   HTTP_ADDR: ":8080"
@@ -59,7 +59,7 @@ services:
     <<: *hardening
     image: smsai-ghana:${SMSAI_IMAGE_TAG:-pilot}
     pull_policy: never
-    command: ["/app/admin", "migrate"]
+    command: ["node", "dist/admin.js", "migrate"]
     env_file: *app-env-file
     environment: *app-env
     networks: [backend]
@@ -74,11 +74,11 @@ services:
       context: ..
       dockerfile: deployments/docker/Dockerfile
     image: smsai-ghana:${SMSAI_IMAGE_TAG:-pilot}
-    command: ["/app/api"]
+    command: ["node", "--enable-source-maps", "dist/api.js"]
     restart: unless-stopped
     env_file: *app-env-file
     environment: *app-env
-    # public: Caddy reaches the API here, and the API calls DeepInfra and mNotify.
+    # public: Caddy reaches the API here (including the phone gateway), and the API calls DeepInfra.
     networks: [public, backend]
     stop_grace_period: 20s
     depends_on:
@@ -91,12 +91,12 @@ services:
     <<: *hardening
     image: smsai-ghana:${SMSAI_IMAGE_TAG:-pilot}
     pull_policy: never
-    command: ["/app/worker"]
+    command: ["node", "--enable-source-maps", "dist/worker.js"]
     restart: unless-stopped
     env_file: *app-env-file
     environment:
       <<: *app-env
-      WORKER_METRICS_ADDR: ":9091"
+      WORKER_METRICS_PORT: "9091"
     networks: [public, backend]
     # In-flight jobs finish within their lease (JOB_LEASE_SECONDS, default 60).
     stop_grace_period: 70s

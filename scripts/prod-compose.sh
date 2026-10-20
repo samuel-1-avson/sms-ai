@@ -2,10 +2,10 @@
 # docker compose for the pilot stack (deployments/compose.prod.yaml) with the
 # operator's env file, from any working directory:
 #   scripts/prod-compose.sh up -d --build
-#   scripts/prod-compose.sh exec api /app/admin flag ai_enabled false
+#   scripts/prod-compose.sh exec api node dist/admin.js flag ai_enabled false
 # SMSAI_ENV_FILE selects another env file (default deployments/.env.prod).
 set -eu
-# Git Bash on Windows: pass container paths such as /app/admin unchanged.
+# Git Bash on Windows: pass container paths unchanged.
 export MSYS_NO_PATHCONV=1
 
 here=$(cd "$(dirname "$0")" && (pwd -W 2>/dev/null || pwd))

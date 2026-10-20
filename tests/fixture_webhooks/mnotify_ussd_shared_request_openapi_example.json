@@ -1,7 +1,0 @@
-{
-  "_note": "Copied from the request example of 'Shared USSD' in mNotify's OpenAPI file (https://developer.bms.africa/openapi14.yaml, tag USSD, operation ussd/shared).",
-  "msisdn": "233541509394",
-  "sequenceID": "6789940010",
-  "data": "*899*86#",
-  "timestamp": "2025-09-01T11:22:33Z"
-}

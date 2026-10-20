@@ -1,6 +1,0 @@
-{
-  "_note": "Copied from the 200 example of 'Check SMS Balance' in mNotify's OpenAPI file (GET /balance/sms?key=...).",
-  "status": "success",
-  "balance": 1000,
-  "bonus": 471
-}

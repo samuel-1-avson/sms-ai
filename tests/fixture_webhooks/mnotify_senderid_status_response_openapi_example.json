@@ -1,9 +1,0 @@
-{
-  "_note": "Copied from the 200 example of 'Check Sender ID Status' in mNotify's OpenAPI file (POST /senderid/status?key=...). Note the space in the key 'sender name'.",
-  "status": "success",
-  "code": "2000",
-  "summary": {
-    "sender name": "mNotify",
-    "status": "Approved"
-  }
-}

@@ -1,8 +1,0 @@
-{
-  "_note": "Copied from the curl example of 'Quick Bulk SMS' in mNotify's OpenAPI file (POST /sms/quick?key=...). The adapter sends one recipient per call and never sends sms_type.",
-  "recipient": ["0241234567", "0201234567"],
-  "sender": "mNotify",
-  "message": "API messaging is fun!",
-  "is_schedule": false,
-  "schedule_date": ""
-}

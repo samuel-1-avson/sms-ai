@@ -1,8 +1,0 @@
-{
-  "_note": "Copied from the response example of 'Shared USSD' in mNotify's OpenAPI file. The example looks swapped: sequenceID holds a date-time-like number and timestamp holds the request's sequenceID. The adapter echoes the request's sequenceID and sends an RFC 3339 timestamp (see docs/PROVIDER_VALIDATION.md).",
-  "msisdn": "233541509394",
-  "sequenceID": "20180801110921",
-  "message": "WHAT YOU WANT USERS TO READ.",
-  "timestamp": "6789940010",
-  "continueFlag": 0
-}

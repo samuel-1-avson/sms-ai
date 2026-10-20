@@ -1,8 +1,0 @@
-{
-  "_note": "Constructed, not copied from MTN: messageType 5 (Timeout), the user did not answer in time. The messageType is sent as a JSON number here to cover both spellings.",
-  "sessionId": "9a3c0e51b5b64f0f",
-  "messageType": 5,
-  "msisdn": "233541234567",
-  "serviceCode": "*713*1#",
-  "ussdString": ""
-}

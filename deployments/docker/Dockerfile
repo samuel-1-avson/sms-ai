@@ -1,18 +1,26 @@
 # syntax=docker/dockerfile:1
-# One image, three binaries: api, worker, admin (plan §4.3).
-FROM golang:1.24-alpine AS build
+# One image, three entry points: dist/api.js, dist/worker.js, dist/admin.js.
+FROM node:22-alpine AS build
 WORKDIR /src
-ENV CGO_ENABLED=0 GOTOOLCHAIN=local GOFLAGS=-buildvcs=false
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api \
- && go build -trimpath -ldflags="-s -w" -o /out/worker ./cmd/worker \
- && go build -trimpath -ldflags="-s -w" -o /out/admin ./cmd/admin
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY packages/shared/package.json packages/shared/
+COPY apps/server/package.json apps/server/
+COPY apps/gateway/package.json apps/gateway/
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --filter "@smsai/server..."
+COPY packages/shared/ packages/shared/
+COPY apps/server/ apps/server/
+RUN pnpm --filter @smsai/server build
 
-FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=build /out/ /app/
+# The bundles are self-contained: no node_modules at runtime.
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /src/apps/server/dist/ /app/dist/
+COPY apps/server/public/ /app/public/
 COPY data/ /app/data/
-USER nonroot:nonroot
+COPY migrations/ /app/migrations/
+USER node
 EXPOSE 8080
-CMD ["/app/api"]
+CMD ["node", "--enable-source-maps", "dist/api.js"]

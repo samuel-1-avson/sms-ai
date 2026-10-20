@@ -1,7 +1,0 @@
-{
-  "_note": "Copied from the response example of 'Dedicated USSD' in mNotify's OpenAPI file.",
-  "responseExitCode": 200,
-  "shouldClose": false,
-  "ussdMenu": "1. Balance\r\n2. Buy Data\r\n0. Exit",
-  "responseMessage": "Menu delivered successfully"
-}

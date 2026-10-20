@@ -1,8 +1,8 @@
 #!/bin/sh
 # Create the pilot env file from deployments/env.prod.example with fresh
 # secrets: encryption/HMAC keys and tokens from `admin genkey`, plus random
-# Postgres and Grafana passwords and the mNotify USSD callback token. DOMAIN, the allowlist, the alert webhook
-# and provider credentials are left for you to edit (lines marked EDIT).
+# Postgres and Grafana passwords. DOMAIN, the allowlist, the alert webhook
+# and the DeepInfra key are left for you to edit (lines marked EDIT).
 #
 #   scripts/init_env_prod.sh                  writes deployments/.env.prod
 #   scripts/init_env_prod.sh /path/to/file    writes another file (dry runs)
@@ -28,11 +28,10 @@ hex() { od -An -tx1 -N"$1" /dev/urandom | tr -d ' \n'; }
 umask 077
 values=$(mktemp)
 trap 'rm -f "$values"' EXIT
-docker run --rm --network none "$image" /app/admin genkey | tr -d '\r' >"$values"
+docker run --rm --network none "$image" node dist/admin.js genkey | tr -d '\r' >"$values"
 {
 	echo "POSTGRES_PASSWORD=$(hex 24)"
 	echo "GRAFANA_ADMIN_PASSWORD=$(hex 18)"
-	echo "MNOTIFY_USSD_TOKEN=$(hex 24)"
 } >>"$values"
 
 # Replace KEY=... lines of the template whose KEY has a generated value.
@@ -43,6 +42,4 @@ chmod 600 "$out"
 
 echo "Wrote $out with generated keys, tokens and passwords."
 echo "Now edit the lines marked EDIT, and save a copy of ENCRYPTION_KEYS_V1 and HMAC_KEYS_V1 in your password manager."
-echo "MNOTIFY_USSD_TOKEN is part of the callback URL you give mNotify (https://<DOMAIN>/webhooks/ussd/mnotify/session?token=...); treat it as a secret."
-echo "Also set MNOTIFY_API_KEY (mNotify dashboard > Settings > Developer), SMS_OUTBOUND_SENDER_ID (an approved sender ID) and USSD_SERVICE_CODE."
-echo "MTN, Hubtel and Arkesel are dormant; if you ever switch back to MTN, its tokens are not generated here (see the MTN comment block in the file)."
+echo "Also set DEEPINFRA_API_KEY and GATEWAY_PHONE_NUMBER, then pair the phone: scripts/prod-compose.sh exec api node dist/admin.js gateway-pair"

@@ -4,3 +4,9 @@ bin
 deployments/monitoring
 *.md
 **/.env*
+**/node_modules
+**/dist
+apps/gateway/android
+apps/gateway/ios
+apps/gateway/.expo
+**/.pnpm-store
