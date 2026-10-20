@@ -4,10 +4,12 @@
 *.test
 *.out
 coverage.*
-# Pilot env files (deployments/.env.prod) hold production secrets.
 .env.*
-!.env.example
 node_modules/
 dist/
 coverage/
 .pnpm-store/
+# Gradle output of the Kotlin test project
+apps/gateway/modules/sms-gateway/jvm/build/
+apps/gateway/modules/sms-gateway/jvm/.gradle/
+.kotlin/

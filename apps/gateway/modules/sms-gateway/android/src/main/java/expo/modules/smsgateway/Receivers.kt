@@ -7,11 +7,13 @@ import android.content.Intent
 import android.provider.Telephony
 import android.telephony.SmsManager
 import android.telephony.SmsMessage
+import expo.modules.smsgateway.brain.maskNumber
+import expo.modules.smsgateway.brain.normalizeNumber
 import java.util.UUID
 
 /**
- * Incoming texts. Each one is written to the local inbox (with a fresh UUID
- * the server uses to drop retries) before anything else happens.
+ * Incoming texts. Each one is written to the local inbox before anything else
+ * happens, then the service is woken to answer it.
  */
 class SmsReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
@@ -26,16 +28,18 @@ class SmsReceiver : BroadcastReceiver() {
     // One broadcast can hold the parts of a long text (and, rarely, several senders).
     messages.filterNotNull().groupBy { it.displayOriginatingAddress ?: it.originatingAddress ?: "" }.forEach { (sender, parts) ->
       if (sender.isBlank()) return@forEach
+      // Stored as E.164 so "024..." and "+23324..." are the same person.
+      // Network names ("MTN") stay as they are; the answerer ignores them.
+      val number = normalizeNumber(sender)
       db.insertInbound(
-        GatewayDb.Inbound(
-          id = UUID.randomUUID().toString(),
-          sender = sender,
-          body = parts.joinToString("") { it.displayMessageBody ?: it.messageBody ?: "" },
-          receivedAt = parts.first().timestampMillis.takeIf { it > 0 } ?: System.currentTimeMillis(),
-          sim = if (sub >= 0) sub.toString() else null,
-        ),
+        id = UUID.randomUUID().toString(),
+        sender = number ?: sender.trim(),
+        body = parts.joinToString("") { it.displayMessageBody ?: it.messageBody ?: "" },
+        // Arrival time on this phone (the network timestamp can be skewed).
+        receivedAt = System.currentTimeMillis(),
+        sim = if (sub >= 0) sub.toString() else null,
       )
-      db.addEvent("receive", "Text from ${SmsSender.mask(sender)}")
+      db.addEvent("receive", "Text from ${if (number != null) maskNumber(number) else sender.take(20)}")
     }
     GatewayService.wake()
     if (prefs.enabled) GatewayService.start(context)
@@ -76,7 +80,7 @@ class SmsResultReceiver : BroadcastReceiver() {
   }
 }
 
-/** Restarts the gateway after a reboot or an app update, if it was running. */
+/** Restarts the service after a reboot or an app update, if it was running. */
 class BootReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {

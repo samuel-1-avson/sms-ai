@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SMS AI Gateway",
+    "name": "SMS AI",
     "slug": "smsai-gateway",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -14,20 +14,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "gh.smsai.gateway",
-      "permissions": [
-        "android.permission.CAMERA"
-      ]
+      "package": "gh.smsai.gateway"
     },
-    "plugins": [
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "The camera scans the pairing QR code from your server.",
-          "recordAudioAndroid": false
-        }
-      ]
-    ],
     "platforms": [
       "android"
     ],

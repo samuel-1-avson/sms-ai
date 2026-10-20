@@ -1,25 +1,45 @@
-// Typed wrapper for the Kotlin SmsGateway module. The gateway runs in a
+// Typed wrapper for the Kotlin SmsGateway module. The SMS AI runs in a
 // native foreground service; these calls configure it and read its state.
 import { requireNativeModule } from "expo";
 
 export interface GatewayStatus {
+  /** An API key is saved. */
   configured: boolean;
-  serverUrl: string | null;
   enabled: boolean;
   running: boolean;
   paused: boolean;
-  subscriptionId: number;
-  sendIntervalMs: number;
-  deviceId: string;
   lastError: string | null;
-  lastContactAt: number;
-  inboxPending: number;
+  lastAnswerAt: number;
+  /** "closed", or "open: <reason>" while AI calls are paused after errors. */
+  aiBreaker: string;
+  /** Received texts not yet answered. */
+  waiting: number;
   outboxPending: number;
   sending: number;
-  statusPending: number;
   sentToday: number;
+  failedToday: number;
   receivedToday: number;
+  answeredToday: number;
+  smsPartsToday: number;
+  aiCostToday: number;
+  aiCallsToday: number;
+  aiFailuresToday: number;
 }
+
+export interface GatewaySettings {
+  hasApiKey: boolean;
+  apiKeyHint: string | null;
+  model: string;
+  fallbackModel: string;
+  ownNumber: string;
+  dailyPerNumberCap: number;
+  dailySmsPartCap: number;
+  dailySpendCapUsd: number;
+  subscriptionId: number;
+  sendIntervalMs: number;
+}
+
+export type SettingsUpdate = Partial<Omit<GatewaySettings, "hasApiKey" | "apiKeyHint">>;
 
 export interface GatewayPermissions {
   receiveSms: boolean;
@@ -38,23 +58,38 @@ export interface Sim {
 
 export interface GatewayEvent {
   at: number;
-  kind: "receive" | "send" | "error" | "service";
+  kind: "receive" | "send" | "answer" | "command" | "ignore" | "expire" | "limit" | "error" | "service";
   text: string;
 }
 
+export type AskResult =
+  | {
+      ok: true;
+      /** The whole cleaned-up answer. */
+      text: string;
+      /** What the first SMS would say. */
+      firstSms: string;
+      hasMore: boolean;
+      model: string;
+      latencyMs: number;
+      costUsd: number;
+      error: null;
+    }
+  | { ok: false; error: string };
+
 interface SmsGatewayNative {
   getStatus(): GatewayStatus;
+  getSettings(): GatewaySettings;
+  setSettings(update: SettingsUpdate): void;
+  setApiKey(key: string): void;
+  clearApiKey(): void;
   getPermissions(): GatewayPermissions;
-  configure(serverUrl: string, secret: string): void;
-  unpair(): void;
   start(): void;
   stop(): void;
   setPaused(paused: boolean): void;
-  setSubscriptionId(id: number): void;
-  setSendIntervalMs(ms: number): void;
   listSims(): Sim[];
   recentEvents(limit: number): GatewayEvent[];
-  testConnection(serverUrl: string, secret: string): Promise<{ ok: boolean; serverTime?: string; error: string | null }>;
+  askAI(question: string): Promise<AskResult>;
   requestIgnoreBatteryOptimizations(): void;
   openAppSettings(): void;
 }

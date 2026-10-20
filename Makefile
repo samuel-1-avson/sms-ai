@@ -1,32 +1,13 @@
-# Convenience targets (Linux/macOS/WSL). Everything runs in Docker.
-COMPOSE = docker compose -f deployments/compose.yaml
+# Convenience targets. The app itself is built in the cloud with EAS.
+.PHONY: test typecheck apk
 
-.PHONY: up down logs test genkey pair tunnel psql
-
-up:
-	$(COMPOSE) up -d --build
-
-down:
-	$(COMPOSE) down
-
-logs:
-	$(COMPOSE) logs -f api worker
-
+# Kotlin tests for the answering logic (runs in Docker; no JDK needed).
 test:
-	$(COMPOSE) up -d postgres
-	$(COMPOSE) --profile test run --rm test
+	pnpm test:phone
 
-genkey:
-	$(COMPOSE) run --rm --no-deps api node dist/admin.js genkey
+typecheck:
+	pnpm typecheck
 
-# Print the QR code that pairs the gateway phone (needs GATEWAY_PUBLIC_URL and GATEWAY_DEVICE_SECRET in .env).
-pair:
-	$(COMPOSE) run --rm --no-deps api node dist/admin.js gateway-pair
-
-# Public HTTPS URL for the local API, for pairing a real phone with a laptop stack.
-tunnel:
-	$(COMPOSE) --profile tunnel up -d tunnel
-	sleep 5; $(COMPOSE) logs tunnel | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | tail -1
-
-psql:
-	$(COMPOSE) exec postgres psql -U smsai -d smsai
+# Installable Android APK, built by EAS (needs `npx eas-cli login` once).
+apk:
+	cd apps/gateway && npx eas-cli@latest build -p android --profile preview

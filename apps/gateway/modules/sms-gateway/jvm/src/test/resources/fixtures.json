@@ -1,0 +1,935 @@
+{
+ "measure": [
+  {
+   "input": "Hello",
+   "encoding": "gsm7",
+   "units": 5
+  },
+  {
+   "input": "[a]",
+   "encoding": "gsm7",
+   "units": 5
+  },
+  {
+   "input": "€5",
+   "encoding": "gsm7",
+   "units": 3
+  },
+  {
+   "input": "@£$¥",
+   "encoding": "gsm7",
+   "units": 4
+  },
+  {
+   "input": "It’s",
+   "encoding": "ucs2",
+   "units": 4
+  },
+  {
+   "input": "😀",
+   "encoding": "ucs2",
+   "units": 2
+  },
+  {
+   "input": "",
+   "encoding": "gsm7",
+   "units": 0
+  },
+  {
+   "input": "ɛɛɛ",
+   "encoding": "ucs2",
+   "units": 3
+  },
+  {
+   "input": "a\nb\rc",
+   "encoding": "gsm7",
+   "units": 5
+  },
+  {
+   "input": "Ä{}",
+   "encoding": "gsm7",
+   "units": 5
+  }
+ ],
+ "segments": [
+  {
+   "input": "",
+   "segments": 0
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "segments": 1
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "segments": 2
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "segments": 2
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "segments": 3
+  },
+  {
+   "input": "ɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛ",
+   "segments": 1
+  },
+  {
+   "input": "ɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛ",
+   "segments": 2
+  },
+  {
+   "input": "ɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛ",
+   "segments": 2
+  },
+  {
+   "input": "ɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛ",
+   "segments": 3
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa€aaaaaaaaaa",
+   "segments": 2
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa€",
+   "segments": 2
+  },
+  {
+   "input": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+   "segments": 1
+  },
+  {
+   "input": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+   "segments": 2
+  }
+ ],
+ "sanitize": [
+  {
+   "input": "It’s “great” — really…",
+   "gsm7": "It's \"great\" - really...",
+   "ucs2": "It's \"great\" - really...",
+   "local": false
+  },
+  {
+   "input": "2 × 3 ÷ 6 ≤ 1 ≥ 0",
+   "gsm7": "2 x 3 / 6 <= 1 >= 0",
+   "ucs2": "2 x 3 / 6 <= 1 >= 0",
+   "local": false
+  },
+  {
+   "input": "H₂O and x² at 25°C",
+   "gsm7": "H2O and x^2 at 25 deg C",
+   "ucs2": "H2O and x^2 at 25 deg C",
+   "local": false
+  },
+  {
+   "input": "Earth's tilt (23.5°) causes seasons",
+   "gsm7": "Earth's tilt (23.5 deg) causes seasons",
+   "ucs2": "Earth's tilt (23.5 deg) causes seasons",
+   "local": false
+  },
+  {
+   "input": "• one\n• two",
+   "gsm7": "one; two",
+   "ucs2": "one; two",
+   "local": false
+  },
+  {
+   "input": "It costs GH¢5 or ₵5",
+   "gsm7": "It costs GHS5 or GHS5",
+   "ucs2": "It costs GHS5 or GHS5",
+   "local": false
+  },
+  {
+   "input": "Great job 👍!",
+   "gsm7": "Great job!",
+   "ucs2": "Great job!",
+   "local": false
+  },
+  {
+   "input": "Café naïve façade",
+   "gsm7": "Café naive facade",
+   "ucs2": "Café naive facade",
+   "local": false
+  },
+  {
+   "input": "a b​c",
+   "gsm7": "a bc",
+   "ucs2": "a bc",
+   "local": false
+  },
+  {
+   "input": "Use `*929#` now",
+   "gsm7": "Use *929# now",
+   "ucs2": "Use *929# now",
+   "local": false
+  },
+  {
+   "input": "π r²",
+   "gsm7": "pi r^2",
+   "ucs2": "pi r^2",
+   "local": false
+  },
+  {
+   "input": "Visit [NHIA](https://www.nhis.gov.gh) now",
+   "gsm7": "Visit NHIA (https://www.nhis.gov.gh) now",
+   "ucs2": "Visit NHIA (https://www.nhis.gov.gh) now",
+   "local": false
+  },
+  {
+   "input": "Sure! Here is the answer: photosynthesis makes food.",
+   "gsm7": "Photosynthesis makes food.",
+   "ucs2": "Photosynthesis makes food.",
+   "local": false
+  },
+  {
+   "input": "Certainly. Here’s a short explanation. Ohm’s law is V=IR.",
+   "gsm7": "Ohm's law is V=IR.",
+   "ucs2": "Ohm's law is V=IR.",
+   "local": false
+  },
+  {
+   "input": "## Ohm's law\n**V = I x R** (voltage = current x resistance)",
+   "gsm7": "Ohm's law V = I x R (voltage = current x resistance)",
+   "ucs2": "Ohm's law V = I x R (voltage = current x resistance)",
+   "local": false
+  },
+  {
+   "input": "Answer: 42",
+   "gsm7": "42",
+   "ucs2": "42",
+   "local": false
+  },
+  {
+   "input": "Steps:\n1. Mix flour\n2. Bake it",
+   "gsm7": "Steps: Mix flour; Bake it",
+   "ucs2": "Steps: Mix flour; Bake it",
+   "local": false
+  },
+  {
+   "input": "Reply STOP to opt out",
+   "gsm7": "Reply STOP to opt out",
+   "ucs2": "Reply STOP to opt out",
+   "local": false
+  },
+  {
+   "input": "OK is short for okay.",
+   "gsm7": "OK is short for okay.",
+   "ucs2": "OK is short for okay.",
+   "local": false
+  },
+  {
+   "input": "2*3*4 = 24",
+   "gsm7": "2*3*4 = 24",
+   "ucs2": "2*3*4 = 24",
+   "local": false
+  },
+  {
+   "input": "Line one\n\n---\n\nLine two",
+   "gsm7": "Line one Line two",
+   "ucs2": "Line one Line two",
+   "local": false
+  },
+  {
+   "input": "Ɛte sɛn? Me ho yɛ.",
+   "gsm7": "Ete sen? Me ho ye.",
+   "ucs2": "Ɛte sɛn? Me ho yɛ.",
+   "local": true
+  },
+  {
+   "input": "ɔ’s",
+   "gsm7": "o's",
+   "ucs2": "ɔ's",
+   "local": true
+  },
+  {
+   "input": "Hello there! Accra is the capital of Ghana.",
+   "gsm7": "Hello there! Accra is the capital of Ghana.",
+   "ucs2": "Hello there! Accra is the capital of Ghana.",
+   "local": false
+  },
+  {
+   "input": "hi, accra is the capital.",
+   "gsm7": "Accra is the capital.",
+   "ucs2": "Accra is the capital.",
+   "local": false
+  },
+  {
+   "input": "Of course! **Kumasi** is in the Ashanti Region.\r\n\r\n> Note: it is big.",
+   "gsm7": "Kumasi is in the Ashanti Region. Note: it is big.",
+   "ucs2": "Kumasi is in the Ashanti Region. Note: it is big.",
+   "local": false
+  },
+  {
+   "input": "1) First\n2) Second\n3) Third",
+   "gsm7": "First; Second; Third",
+   "ucs2": "First; Second; Third",
+   "local": false
+  },
+  {
+   "input": "- apples\n- mangoes\n* pawpaw\n+ banana",
+   "gsm7": "apples; mangoes; pawpaw; banana",
+   "ucs2": "apples; mangoes; pawpaw; banana",
+   "local": false
+  },
+  {
+   "input": "Price is ¥5 and €3 [approx] {maybe} ~10 | ok \\ yes ^2",
+   "gsm7": "Price is ¥5 and €3 [approx] {maybe} ~10 | ok \\ yes ^2",
+   "ucs2": "Price is ¥5 and €3 [approx] {maybe} ~10 | ok \\ yes ^2",
+   "local": false
+  },
+  {
+   "input": "Tab\there and nbsp and thin",
+   "gsm7": "Tab here and nbsp and thin",
+   "ucs2": "Tab here and nbsp and thin",
+   "local": false
+  },
+  {
+   "input": "Señor Ñandú ÄÖÜ äöü ß Ø å Δ Φ",
+   "gsm7": "Señor Ñandu ÄÖÜ äöü ß Ø å Δ Φ",
+   "ucs2": "Señor Ñandu ÄÖÜ äöü ß Ø å Δ Φ",
+   "local": false
+  },
+  {
+   "input": "αβγ δ ε θ λ μ π ρ σ φ ω",
+   "gsm7": "alphabetagamma delta epsilon theta lambda u pi rho sigma phi omega",
+   "ucs2": "alphabetagamma delta epsilon theta lambda u pi rho sigma phi omega",
+   "local": false
+  },
+  {
+   "input": "½ + ¼ = ¾ and ⅓ ≈ 0.33 → done ⇒ ok ↔ fine",
+   "gsm7": "1/2 + 1/4 = 3/4 and 1/3 ~ 0.33 -> done => ok <-> fine",
+   "ucs2": "1/2 + 1/4 = 3/4 and 1/3 ~ 0.33 -> done => ok <-> fine",
+   "local": false
+  },
+  {
+   "input": "Grüße aus Łódź, Kraków, Brno, Plzeň",
+   "gsm7": "Grüße aus Lod, Krakow, Brno, Plze",
+   "ucs2": "Grüße aus Lodź, Krakow, Brno, Plzeň",
+   "local": false
+  },
+  {
+   "input": "😀🎉 Party time 🎈",
+   "gsm7": "Party time",
+   "ucs2": "Party time",
+   "local": false
+  },
+  {
+   "input": "Okay, here are the steps:\n\n1. Dial *170#\n2. Choose 6\n3. Enter amount",
+   "gsm7": "Here are the steps: Dial *170#; Choose 6; Enter amount",
+   "ucs2": "Here are the steps: Dial *170#; Choose 6; Enter amount",
+   "local": false
+  },
+  {
+   "input": "Here's your answer to your question: Yes.",
+   "gsm7": "Yes.",
+   "ucs2": "Yes.",
+   "local": false
+  },
+  {
+   "input": "Answer : It is 5 .",
+   "gsm7": "It is 5.",
+   "ucs2": "It is 5.",
+   "local": false
+  },
+  {
+   "input": "Kofi’s mum said “Akwaaba” – welcome!",
+   "gsm7": "Kofi's mum said \"Akwaaba\" - welcome!",
+   "ucs2": "Kofi's mum said \"Akwaaba\" - welcome!",
+   "local": false
+  },
+  {
+   "input": "a b c",
+   "gsm7": "a b c",
+   "ucs2": "a b c",
+   "local": false
+  },
+  {
+   "input": "x­y",
+   "gsm7": "xy",
+   "ucs2": "xy",
+   "local": false
+  },
+  {
+   "input": "Text  with   many    spaces .",
+   "gsm7": "Text with many spaces.",
+   "ucs2": "Text with many spaces.",
+   "local": false
+  },
+  {
+   "input": "### \n\n",
+   "gsm7": "",
+   "ucs2": "",
+   "local": false
+  },
+  {
+   "input": "",
+   "gsm7": "",
+   "ucs2": "",
+   "local": false
+  },
+  {
+   "input": "Ɔdɔ yɛ dɛ. Ŋ is ng.",
+   "gsm7": "Odo ye de. Ng is ng.",
+   "ucs2": "Ɔdɔ yɛ dɛ. Ŋ is ng.",
+   "local": true
+  }
+ ],
+ "split": [
+  {
+   "input": "Photosynthesis is the process plants use to turn sunlight, water and carbon dioxide into glucose and oxygen. It happens in the chloroplasts of leaf cells. Chlorophyll absorbs the light energy that powers the reaction for growth.",
+   "first": "Photosynthesis is the process plants use to turn sunlight, water and carbon dioxide into glucose and oxygen. ..Txt MORE",
+   "rest": "It happens in the chloroplasts of leaf cells. Chlorophyll absorbs the light energy that powers the reaction for growth.",
+   "truncated": "Photosynthesis is the process plants use to turn sunlight, water and carbon dioxide into glucose and oxygen. It happens in the chloroplasts of leaf cells.",
+   "pages3": [
+    "Photosynthesis is the process plants use to turn sunlight, water and carbon dioxide into glucose and oxygen. ..Txt MORE",
+    "It happens in the chloroplasts of leaf cells. Chlorophyll absorbs the light energy that powers the reaction for growth."
+   ]
+  },
+  {
+   "input": "Ohm's law: V = I x R.",
+   "first": "Ohm's law: V = I x R.",
+   "rest": "",
+   "truncated": "Ohm's law: V = I x R.",
+   "pages3": [
+    "Ohm's law: V = I x R."
+   ]
+  },
+  {
+   "input": "plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, ",
+   "first": "plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants ..Txt MORE",
+   "rest": "plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants,",
+   "truncated": "plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants...",
+   "pages3": [
+    "plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants ..Txt MORE",
+    "plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants, plants,"
+   ]
+  },
+  {
+   "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "first": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ..Txt MORE",
+   "rest": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "truncated": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx...",
+   "pages3": [
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ..Txt MORE",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ..Txt MORE",
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   ]
+  },
+  {
+   "input": "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. ",
+   "first": "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. ..Txt MORE",
+   "rest": "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa.",
+   "truncated": "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa.",
+   "pages3": [
+    "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. ..Txt MORE",
+    "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. ..Txt MORE",
+    "Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa. Ɛyɛ adeɛ pa."
+   ]
+  },
+  {
+   "input": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ",
+   "first": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ..Txt MORE",
+   "rest": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+   "truncated": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word...",
+   "pages3": [
+    "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word ..Txt MORE",
+    "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word"
+   ]
+  },
+  {
+   "input": "First sentence is here and it is long enough to matter for the cut. Second sentence keeps going. Third sentence is far too long to fit on this page at all, so it has to go.",
+   "first": "First sentence is here and it is long enough to matter for the cut. Second sentence keeps going. ..Txt MORE",
+   "rest": "Third sentence is far too long to fit on this page at all, so it has to go.",
+   "truncated": "First sentence is here and it is long enough to matter for the cut. Second sentence keeps going.",
+   "pages3": [
+    "First sentence is here and it is long enough to matter for the cut. Second sentence keeps going. ..Txt MORE",
+    "Third sentence is far too long to fit on this page at all, so it has to go."
+   ]
+  },
+  {
+   "input": "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. ",
+   "first": "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. ..Txt MORE",
+   "rest": "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well.",
+   "truncated": "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well.",
+   "pages3": [
+    "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. ..Txt MORE",
+    "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. ..Txt MORE",
+    "Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well. Plants need light to grow well."
+   ]
+  },
+  {
+   "input": "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] ",
+   "first": "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] ..Txt MORE",
+   "rest": "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x]",
+   "truncated": "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x]...",
+   "pages3": [
+    "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] ..Txt MORE",
+    "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] [x] ..Txt MORE",
+    "[x] [x] [x] [x] [x] [x] [x] [x] [x] [x]"
+   ]
+  },
+  {
+   "input": "€ € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € ",
+   "first": "€ € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € ..Txt MORE",
+   "rest": "€ € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € €",
+   "truncated": "€ € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € €...",
+   "pages3": [
+    "€ € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € ..Txt MORE",
+    "€ € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € € €"
+   ]
+  },
+  {
+   "input": "Short. verylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspaces",
+   "first": "Short. verylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwitho ..Txt MORE",
+   "rest": "utspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspaces",
+   "truncated": "Short. verylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspaces...",
+   "pages3": [
+    "Short. verylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwitho ..Txt MORE",
+    "utspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspacesverylongwordwithoutspaces"
+   ]
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "first": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "rest": "",
+   "truncated": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "pages3": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+   ]
+  },
+  {
+   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "first": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ..Txt MORE",
+   "rest": "aaaaaaaaaaaa",
+   "truncated": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...",
+   "pages3": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ..Txt MORE",
+    "aaaaaaaaaaaa"
+   ]
+  },
+  {
+   "input": "Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. ",
+   "first": "Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! ..Txt MORE",
+   "rest": "Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe.",
+   "truncated": "Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it?",
+   "pages3": [
+    "Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! ..Txt MORE",
+    "Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe. Is it? Yes! Maybe."
+   ]
+  },
+  {
+   "input": "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 ",
+   "first": "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 ..Txt MORE",
+   "rest": "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀",
+   "truncated": "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀...",
+   "pages3": [
+    "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 ..Txt MORE",
+    "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 😀 ..Txt MORE",
+    "😀 😀 😀 😀 😀 😀 😀 😀 😀 😀"
+   ]
+  }
+ ],
+ "commands": [
+  {
+   "input": "help",
+   "kind": "HELP"
+  },
+  {
+   "input": " HELP ",
+   "kind": "HELP"
+  },
+  {
+   "input": "?",
+   "kind": "HELP"
+  },
+  {
+   "input": "info",
+   "kind": "HELP"
+  },
+  {
+   "input": "menu",
+   "kind": "HELP"
+  },
+  {
+   "input": "more",
+   "kind": "MORE"
+  },
+  {
+   "input": "More.",
+   "kind": "MORE"
+  },
+  {
+   "input": "m",
+   "kind": "MORE"
+  },
+  {
+   "input": "NEW",
+   "kind": "NEW"
+  },
+  {
+   "input": "reset",
+   "kind": "NEW"
+  },
+  {
+   "input": "new chat",
+   "kind": "NEW"
+  },
+  {
+   "input": "stop",
+   "kind": "STOP"
+  },
+  {
+   "input": "Start!",
+   "kind": "START"
+  },
+  {
+   "input": "unstop",
+   "kind": "START"
+  },
+  {
+   "input": "delete my data",
+   "kind": "DELETE"
+  },
+  {
+   "input": "forget me",
+   "kind": "DELETE"
+  },
+  {
+   "input": "more examples of verbs",
+   "kind": null
+  },
+  {
+   "input": "What is photosynthesis?",
+   "kind": null
+  },
+  {
+   "input": "stop the bleeding",
+   "kind": null
+  },
+  {
+   "input": "constructor",
+   "kind": null
+  },
+  {
+   "input": "  Stop  !!",
+   "kind": "STOP"
+  },
+  {
+   "input": "M?",
+   "kind": "MORE"
+  },
+  {
+   "input": "??",
+   "kind": null
+  },
+  {
+   "input": "opt   out",
+   "kind": "STOP"
+  },
+  {
+   "input": "",
+   "kind": null
+  }
+ ],
+ "scrub": [
+  {
+   "input": "My Ghana Card GHA-123456789-0 will not link",
+   "output": "My Ghana Card [ghana card removed] will not link"
+  },
+  {
+   "input": "card 4111 1111 1111 1111 was charged twice",
+   "output": "card [card number removed] was charged twice"
+  },
+  {
+   "input": "My MoMo PIN is 1234, what do I do?",
+   "output": "My MoMo PIN is [removed], what do I do?"
+  },
+  {
+   "input": "the otp: 583920 came in",
+   "output": "the otp: [removed] came in"
+  },
+  {
+   "input": "my password=abc123x",
+   "output": "my password=[removed]"
+  },
+  {
+   "input": "Solve 2x + 5 = 15",
+   "output": "Solve 2x + 5 = 15"
+  },
+  {
+   "input": "What is a PIN code?",
+   "output": "What is a PIN code?"
+  },
+  {
+   "input": "Call 0244123456 tomorrow",
+   "output": "Call 0244123456 tomorrow"
+  },
+  {
+   "input": "The year 2026 had 1234567890123 grains of rice",
+   "output": "The year 2026 had 1234567890123 grains of rice"
+  },
+  {
+   "input": "gha 123456789 0 and GHA1234567890",
+   "output": "[ghana card removed] and [ghana card removed]"
+  },
+  {
+   "input": "verification code is 99887",
+   "output": "verification code is [removed]"
+  },
+  {
+   "input": "Pin no. 4455 and cvv 123",
+   "output": "Pin no. [removed] and cvv [removed]"
+  },
+  {
+   "input": "4111-1111-1111-1111",
+   "output": "[card number removed]"
+  }
+ ],
+ "senders": [
+  {
+   "input": "0244123456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "233244123456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "+233244123456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "+233 24 412 3456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "00233244123456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "(024) 412-3456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "244123456",
+   "normalized": "+233244123456"
+  },
+  {
+   "input": "+447700900123",
+   "normalized": "+447700900123"
+  },
+  {
+   "input": "",
+   "normalized": null
+  },
+  {
+   "input": "abc",
+   "normalized": null
+  },
+  {
+   "input": "+23324412345",
+   "normalized": null
+  },
+  {
+   "input": "02441234567",
+   "normalized": null
+  },
+  {
+   "input": "12",
+   "normalized": null
+  },
+  {
+   "input": "+0123456789",
+   "normalized": null
+  },
+  {
+   "input": "024-41x-3456",
+   "normalized": null
+  },
+  {
+   "input": "MTN",
+   "normalized": null
+  },
+  {
+   "input": "1515",
+   "normalized": null
+  },
+  {
+   "input": "Telecel",
+   "normalized": null
+  },
+  {
+   "input": "AirtelTigo",
+   "normalized": null
+  },
+  {
+   "input": "4040",
+   "normalized": null
+  },
+  {
+   "input": "+2332441234567",
+   "normalized": null
+  }
+ ],
+ "prompt": [
+  {
+   "question": "What is the capital of Ghana?",
+   "history": [],
+   "maxInputTokens": 800,
+   "now": "2026-10-20T10:00:00Z",
+   "messages": [
+    {
+     "role": "system",
+     "content": "You are SMS AI Ghana, a concise, accurate text assistant for users in Ghana.\nEvery reply is sent as ONE text message of at most 150 characters (about 25 words). Count carefully.\nGive the direct answer in one or two short sentences. Leave out greetings, background and examples unless asked.\nOnly when the user asks for steps or a worked solution may you go longer, up to 300 characters, still with the key result first.\nWrite plain ASCII only: straight quotes ' and \", hyphen -, x for times, / for divide, ^ for powers, GHS for cedis. No other symbols.\nNever use markdown, bold, lists, line breaks, or emojis.\nUse conversation history only to resolve follow-up pronouns or context.\nDo not invent live prices, flight schedules, news, exchange rates, or bookings; state clearly when live info is unavailable.\nDo not name specific companies, agencies, websites or phone numbers unless they are official and you are sure they exist; give general guidance instead.\nFor health, legal, or financial topics, give general educational facts and advise consulting a qualified professional.\nDecline harmful or illegal requests briefly. Never ask for PINs, MoMo OTPs, passwords, or Ghana Card numbers.\nToday's date is 20 October 2026."
+    },
+    {
+     "role": "user",
+     "content": "What is the capital of Ghana?"
+    }
+   ]
+  },
+  {
+   "question": "And its population?",
+   "history": [
+    {
+     "role": "user",
+     "content": "What is the capital of Ghana?"
+    },
+    {
+     "role": "assistant",
+     "content": "Accra is the capital of Ghana."
+    }
+   ],
+   "maxInputTokens": 800,
+   "now": "2026-01-05T23:59:59Z",
+   "messages": [
+    {
+     "role": "system",
+     "content": "You are SMS AI Ghana, a concise, accurate text assistant for users in Ghana.\nEvery reply is sent as ONE text message of at most 150 characters (about 25 words). Count carefully.\nGive the direct answer in one or two short sentences. Leave out greetings, background and examples unless asked.\nOnly when the user asks for steps or a worked solution may you go longer, up to 300 characters, still with the key result first.\nWrite plain ASCII only: straight quotes ' and \", hyphen -, x for times, / for divide, ^ for powers, GHS for cedis. No other symbols.\nNever use markdown, bold, lists, line breaks, or emojis.\nUse conversation history only to resolve follow-up pronouns or context.\nDo not invent live prices, flight schedules, news, exchange rates, or bookings; state clearly when live info is unavailable.\nDo not name specific companies, agencies, websites or phone numbers unless they are official and you are sure they exist; give general guidance instead.\nFor health, legal, or financial topics, give general educational facts and advise consulting a qualified professional.\nDecline harmful or illegal requests briefly. Never ask for PINs, MoMo OTPs, passwords, or Ghana Card numbers.\nToday's date is 5 January 2026."
+    },
+    {
+     "role": "user",
+     "content": "What is the capital of Ghana?"
+    },
+    {
+     "role": "assistant",
+     "content": "Accra is the capital of Ghana."
+    },
+    {
+     "role": "user",
+     "content": "And its population?"
+    }
+   ]
+  },
+  {
+   "question": "Tell me more",
+   "history": [
+    {
+     "role": "assistant",
+     "content": "orphan answer"
+    },
+    {
+     "role": "user",
+     "content": "long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question long question "
+    },
+    {
+     "role": "assistant",
+     "content": "long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer long answer "
+    },
+    {
+     "role": "user",
+     "content": "short q"
+    },
+    {
+     "role": "assistant",
+     "content": "short a"
+    }
+   ],
+   "maxInputTokens": 500,
+   "now": null,
+   "messages": [
+    {
+     "role": "system",
+     "content": "You are SMS AI Ghana, a concise, accurate text assistant for users in Ghana.\nEvery reply is sent as ONE text message of at most 150 characters (about 25 words). Count carefully.\nGive the direct answer in one or two short sentences. Leave out greetings, background and examples unless asked.\nOnly when the user asks for steps or a worked solution may you go longer, up to 300 characters, still with the key result first.\nWrite plain ASCII only: straight quotes ' and \", hyphen -, x for times, / for divide, ^ for powers, GHS for cedis. No other symbols.\nNever use markdown, bold, lists, line breaks, or emojis.\nUse conversation history only to resolve follow-up pronouns or context.\nDo not invent live prices, flight schedules, news, exchange rates, or bookings; state clearly when live info is unavailable.\nDo not name specific companies, agencies, websites or phone numbers unless they are official and you are sure they exist; give general guidance instead.\nFor health, legal, or financial topics, give general educational facts and advise consulting a qualified professional.\nDecline harmful or illegal requests briefly. Never ask for PINs, MoMo OTPs, passwords, or Ghana Card numbers."
+    },
+    {
+     "role": "user",
+     "content": "short q"
+    },
+    {
+     "role": "assistant",
+     "content": "short a"
+    },
+    {
+     "role": "user",
+     "content": "Tell me more"
+    }
+   ]
+  },
+  {
+   "question": "q",
+   "history": [
+    {
+     "role": "user",
+     "content": "ɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛɛ"
+    },
+    {
+     "role": "assistant",
+     "content": "a"
+    }
+   ],
+   "maxInputTokens": 0,
+   "now": "2026-12-31T00:00:00Z",
+   "messages": [
+    {
+     "role": "system",
+     "content": "You are SMS AI Ghana, a concise, accurate text assistant for users in Ghana.\nEvery reply is sent as ONE text message of at most 150 characters (about 25 words). Count carefully.\nGive the direct answer in one or two short sentences. Leave out greetings, background and examples unless asked.\nOnly when the user asks for steps or a worked solution may you go longer, up to 300 characters, still with the key result first.\nWrite plain ASCII only: straight quotes ' and \", hyphen -, x for times, / for divide, ^ for powers, GHS for cedis. No other symbols.\nNever use markdown, bold, lists, line breaks, or emojis.\nUse conversation history only to resolve follow-up pronouns or context.\nDo not invent live prices, flight schedules, news, exchange rates, or bookings; state clearly when live info is unavailable.\nDo not name specific companies, agencies, websites or phone numbers unless they are official and you are sure they exist; give general guidance instead.\nFor health, legal, or financial topics, give general educational facts and advise consulting a qualified professional.\nDecline harmful or illegal requests briefly. Never ask for PINs, MoMo OTPs, passwords, or Ghana Card numbers.\nToday's date is 31 December 2026."
+    },
+    {
+     "role": "user",
+     "content": "q"
+    }
+   ]
+  }
+ ],
+ "tokens": [
+  {
+   "input": "",
+   "tokens": 4
+  },
+  {
+   "input": "abc",
+   "tokens": 5
+  },
+  {
+   "input": "ɛɛɛɛ",
+   "tokens": 6
+  },
+  {
+   "input": "😀",
+   "tokens": 5
+  },
+  {
+   "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "tokens": 30
+  }
+ ],
+ "texts": {
+  "help": "SMS AI Ghana: text any question. MORE=rest, NEW=new chat, CODE x=study pass, STOP=opt out. AI can be wrong. Chats kept 30 days. SMS rates may apply.",
+  "newChat": "New chat started. Ask me anything.",
+  "noMore": "Nothing more for your last answer. Send a new question anytime.",
+  "stop": "You will get no more messages from SMS AI Ghana. Text START to rejoin.",
+  "start": "Welcome to SMS AI Ghana! Text any question. Text HELP for commands.",
+  "deleted": "Your chat history has been deleted. Text any question to start again.",
+  "codeInvalid": "That code is not valid. Check it and try again, e.g. CODE STEMGH.",
+  "codeExpired": "That code has expired or its pool is used up. Ask your school or sponsor for a new one.",
+  "codeUsed": "You have already used that code on this number.",
+  "codeTooMany": "Too many wrong codes today. Please try again tomorrow.",
+  "busy": "SMS AI is busy right now. Please try again in a few minutes.",
+  "failed": "Sorry, I could not answer that right now. Please try again shortly.",
+  "limit15": "Daily limit reached (15/15). Reply tomorrow or text CODE <voucher> if you have a school/study pass."
+ }
+}

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.telephony.SmsManager
+import expo.modules.smsgateway.brain.maskNumber
 
 /** Sends replies from the SIM; results arrive at SmsResultReceiver. */
 object SmsSender {
@@ -38,11 +39,11 @@ object SmsSender {
       } else {
         sm.sendMultipartTextMessage(row.recipient, null, parts, sent, delivered)
       }
-      db.addEvent("send", "Reply to ${mask(row.recipient)} (${parts.size} part${if (parts.size == 1) "" else "s"})")
+      db.addEvent("send", "Reply to ${maskNumber(row.recipient)} (${parts.size} part${if (parts.size == 1) "" else "s"})")
     } catch (e: Exception) {
       // Thrown before anything left the phone: a definite failure.
       db.onPartSent(row.id, false, "send_exception: ${e.javaClass.simpleName}")
-      db.addEvent("error", "Could not send to ${mask(row.recipient)}: ${e.javaClass.simpleName}")
+      db.addEvent("error", "Could not send to ${maskNumber(row.recipient)}: ${e.javaClass.simpleName}")
     }
   }
 
@@ -52,7 +53,4 @@ object SmsSender {
     val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
     return PendingIntent.getBroadcast(context, "$action/$id/$part".hashCode(), intent, flags)
   }
-
-  fun mask(number: String): String =
-    if (number.length < 7) "***" else number.take(4) + "*".repeat(number.length - 6) + number.takeLast(2)
 }

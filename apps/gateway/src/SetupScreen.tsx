@@ -1,4 +1,4 @@
-// The checklist that keeps the gateway alive: permissions, battery
+// The checklist that keeps the SMS AI answering: permissions, battery
 // optimisation, the SIM that answers, and the Android SMS rate limit.
 import { useState } from "react";
 import { Alert, Linking, PermissionsAndroid, Platform, ScrollView, Text, View, type Permission } from "react-native";
@@ -17,13 +17,13 @@ export async function requestGatewayPermissions(): Promise<boolean> {
   return Object.values(result).every((r) => r === PermissionsAndroid.RESULTS.GRANTED);
 }
 
-export function SetupScreen({ onUnpaired }: { onUnpaired: () => void }) {
+export function SetupScreen() {
   const c = usePalette();
   const [perms, refresh] = usePoll(() => SmsGateway.getPermissions(), 2000);
   const [sims, setSims] = useState(() => SmsGateway.listSims());
-  const status = SmsGateway.getStatus();
-  const [sim, setSim] = useState(status.subscriptionId);
-  const [interval, setIntervalMs] = useState(status.sendIntervalMs);
+  const settings = SmsGateway.getSettings();
+  const [sim, setSim] = useState(settings.subscriptionId);
+  const [interval, setIntervalMs] = useState(settings.sendIntervalMs);
 
   const yes = (v: boolean) => (v ? "Granted" : "Missing");
   const tone = (v: boolean): "ok" | "warn" => (v ? "ok" : "warn");
@@ -55,7 +55,7 @@ export function SetupScreen({ onUnpaired }: { onUnpaired: () => void }) {
       <Card title="Stay awake">
         <Row
           label="Battery optimisation"
-          value={perms.ignoringBatteryOptimizations ? "Off (good)" : "On: the gateway may sleep"}
+          value={perms.ignoringBatteryOptimizations ? "Off (good)" : "On: answers may stop"}
           tone={tone(perms.ignoringBatteryOptimizations)}
         />
         <Button label="Turn off battery optimisation" onPress={() => SmsGateway.requestIgnoreBatteryOptimizations()} />
@@ -73,7 +73,7 @@ export function SetupScreen({ onUnpaired }: { onUnpaired: () => void }) {
             key={s.subscriptionId}
             label={`${sim === s.subscriptionId ? "✓ " : ""}${s.label}${s.carrier ? ` · ${s.carrier}` : ""}${s.slot >= 0 ? ` (slot ${s.slot + 1})` : ""}`}
             onPress={() => {
-              SmsGateway.setSubscriptionId(s.subscriptionId);
+              SmsGateway.setSettings({ subscriptionId: s.subscriptionId });
               setSim(s.subscriptionId);
             }}
           />
@@ -91,7 +91,7 @@ export function SetupScreen({ onUnpaired }: { onUnpaired: () => void }) {
               kind={interval === ms ? "primary" : "plain"}
               style={{ flex: 1 }}
               onPress={() => {
-                SmsGateway.setSendIntervalMs(ms);
+                SmsGateway.setSettings({ sendIntervalMs: ms });
                 setIntervalMs(ms);
               }}
             />
@@ -107,27 +107,6 @@ export function SetupScreen({ onUnpaired }: { onUnpaired: () => void }) {
         <Button label="How to enable USB debugging" onPress={() => Linking.openURL("https://developer.android.com/studio/debug/dev-options")} />
       </Card>
 
-      <Card title="Pairing">
-        <Row label="Server" value={status.serverUrl ?? "-"} />
-        <Row label="Device id" value={status.deviceId.slice(0, 8)} />
-        <Button
-          label="Unpair this phone"
-          kind="danger"
-          onPress={() =>
-            Alert.alert("Unpair?", "The gateway stops and forgets the server and its secret.", [
-              { text: "Cancel" },
-              {
-                text: "Unpair",
-                style: "destructive",
-                onPress: () => {
-                  SmsGateway.unpair();
-                  onUnpaired();
-                },
-              },
-            ])
-          }
-        />
-      </Card>
     </ScrollView>
   );
 }

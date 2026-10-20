@@ -8,36 +8,34 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.telephony.SubscriptionManager
-import android.telephony.TelephonyManager
 import android.util.Log
-import org.json.JSONArray
-import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import expo.modules.smsgateway.brain.AiClient
+import expo.modules.smsgateway.brain.Brain
+import expo.modules.smsgateway.brain.Breaker
+import expo.modules.smsgateway.brain.ChatMessage
+import expo.modules.smsgateway.brain.DEEPINFRA_BASE_URL
+import expo.modules.smsgateway.brain.DeepInfra
+import expo.modules.smsgateway.brain.Outcome
+import expo.modules.smsgateway.brain.StepResult
 
 /**
- * The gateway itself: a foreground service that keeps two loops running
- * while the phone is on, whether or not the app's screen is open.
+ * The SMS AI itself: a foreground service that keeps two loops running while
+ * the phone is on, whether or not the app's screen is open.
  *
- *  uploader  forwards received texts and send results, and sends a heartbeat
- *            every minute
- *  poller    long-polls the server for replies, stores them, acknowledges
- *            them and sends them from the SIM, one at a time
+ *  answerer  takes received texts, asks the AI (over the internet) and queues
+ *            the replies
+ *  sender    sends queued replies from the SIM, one at a time
  *
- * Both loops back off when the network or the server is unavailable and
- * pick up where they left off from the local database.
+ * Both work from the local database, so they pick up where they left off
+ * after the app is killed, the phone reboots or the internet drops.
  */
 class GatewayService : Service() {
   @Volatile private var stopping = false
-  private var uploader: Thread? = null
-  private var poller: Thread? = null
+  private var answerer: Thread? = null
+  private var sender: Thread? = null
   private var wakeLock: PowerManager.WakeLock? = null
 
   override fun onBind(intent: Intent?): IBinder? = null
@@ -51,9 +49,10 @@ class GatewayService : Service() {
     wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
       .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "smsai:gateway")
       .apply { setReferenceCounted(false); acquire() }
-    uploader = Thread({ uploadLoop() }, "smsai-uploader").apply { start() }
-    poller = Thread({ pollLoop() }, "smsai-poller").apply { start() }
-    GatewayDb.get(this).addEvent("service", "Gateway started")
+    GatewayDb.get(this).resetAnswering()
+    answerer = Thread({ answerLoop() }, "smsai-answerer").apply { start() }
+    sender = Thread({ sendLoop() }, "smsai-sender").apply { start() }
+    GatewayDb.get(this).addEvent("service", "SMS AI started")
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -70,10 +69,10 @@ class GatewayService : Service() {
     stopping = true
     running = false
     wake()
-    uploader?.interrupt()
-    poller?.interrupt()
+    answerer?.interrupt()
+    sender?.interrupt()
     wakeLock?.let { if (it.isHeld) it.release() }
-    GatewayDb.get(this).addEvent("service", "Gateway stopped")
+    GatewayDb.get(this).addEvent("service", "SMS AI stopped")
     super.onDestroy()
   }
 
@@ -81,80 +80,57 @@ class GatewayService : Service() {
   // Loops
   // ---------------------------------------------------------------------------
 
-  private fun client(): GatewayClient? {
-    val prefs = GatewayPrefs(this)
-    val url = prefs.serverUrl ?: return null
-    val secret = prefs.secret ?: return null
-    return GatewayClient(url, secret)
-  }
-
-  private fun uploadLoop() {
-    var backoff = 0L
-    var lastHeartbeat = 0L
+  private fun answerLoop() {
+    val db = GatewayDb.get(this)
+    val brain = brain(this)
     var lastPrune = 0L
-    while (!stopping) {
-      try {
-        val c = client() ?: throw IllegalStateException("not paired")
-        flushInbox(c)
-        flushStatuses(c)
-        if (System.currentTimeMillis() - lastHeartbeat > HEARTBEAT_MS) {
-          heartbeat(c)
-          lastHeartbeat = System.currentTimeMillis()
-        }
-        if (System.currentTimeMillis() - lastPrune > 3_600_000L) {
-          GatewayDb.get(this).prune()
-          lastPrune = System.currentTimeMillis()
-        }
-        ok()
-        backoff = 0
-        waitForWork(15_000)
-      } catch (e: InterruptedException) {
-        return
-      } catch (e: Exception) {
-        backoff = nextBackoff(backoff)
-        fail("upload", e)
-        try {
-          waitForWork(backoff)
-        } catch (_: InterruptedException) {
-          return
-        }
-      }
-    }
-  }
-
-  private fun pollLoop() {
-    var backoff = 0L
     while (!stopping) {
       try {
         val prefs = GatewayPrefs(this)
         if (prefs.paused) {
-          Thread.sleep(5_000)
+          waitForWork(30_000)
           continue
         }
-        val c = client() ?: throw IllegalStateException("not paired")
-        sendPending(prefs)
-        val res = c.post(GatewayClient.OUTBOX, JSONObject().put("wait", 25), readTimeoutMs = 45_000)
-        val arr = res.optJSONArray("messages") ?: JSONArray()
-        if (arr.length() > 0) {
-          val rows = (0 until arr.length()).map { i ->
-            val o = arr.getJSONObject(i)
-            GatewayDb.Outbound(o.getString("id"), o.getString("to"), o.getString("body"))
-          }
-          // Saved first, then acknowledged: an unacknowledged reply is offered
-          // again, and the local primary key turns the repeat into a no-op.
-          GatewayDb.get(this).insertOutbound(rows)
-          c.post(GatewayClient.ACK, JSONObject().put("ids", JSONArray(rows.map { it.id })))
-          sendPending(prefs)
+        if (!prefs.configured) {
+          fail("Add your DeepInfra API key in Settings")
+          waitForWork(30_000)
+          continue
         }
-        ok()
-        backoff = 0
+        // Answer everyone who is ready; each step is one sender.
+        while (!stopping && !GatewayPrefs(this).paused) {
+          val result = brain.step()
+          when (result) {
+            StepResult.IDLE -> break
+            StepResult.ANSWERED -> ok(prefs)
+            StepResult.RETRY, StepResult.FAILED -> fail("AI: ${brain.lastError ?: "unavailable"}")
+            else -> {}
+          }
+          if (result != StepResult.IDLE) wake()
+        }
+        if (System.currentTimeMillis() - lastPrune > 3_600_000L) {
+          db.prune()
+          lastPrune = System.currentTimeMillis()
+        }
+        // Sleep until a text arrives, or briefly while texts are waiting out
+        // the burst window or a retry delay.
+        val due = db.nextDueAt()
+        val now = System.currentTimeMillis()
+        waitForWork(
+          when {
+            due == null -> 60_000L
+            due <= now -> 3_000L
+            else -> (due - now).coerceIn(1_000L, 60_000L)
+          },
+        )
       } catch (e: InterruptedException) {
         return
       } catch (e: Exception) {
-        backoff = nextBackoff(backoff)
-        fail("poll", e)
+        fail("${e.javaClass.simpleName}: ${e.message ?: ""}".take(160))
+        // This thread is the only one answering, so anything still claimed
+        // was claimed by the step that just failed: let it be tried again.
+        runCatching { db.resetAnswering() }
         try {
-          Thread.sleep(backoff)
+          Thread.sleep(5_000)
         } catch (_: InterruptedException) {
           return
         }
@@ -162,77 +138,48 @@ class GatewayService : Service() {
     }
   }
 
-  private fun sendPending(prefs: GatewayPrefs) {
-    val db = GatewayDb.get(this)
-    for (row in db.pendingSends(50)) {
-      if (stopping || prefs.paused) return
-      SmsSender.send(this, db, row, prefs.subscriptionId)
-      Thread.sleep(prefs.sendIntervalMs)
-    }
-  }
-
-  private fun flushInbox(c: GatewayClient) {
-    val db = GatewayDb.get(this)
-    while (true) {
-      val batch = db.pendingInbound(50)
-      if (batch.isEmpty()) return
-      val messages = JSONArray()
-      for (m in batch) {
-        messages.put(
-          JSONObject().put("id", m.id).put("from", m.sender).put("body", m.body).put("received_at", iso(m.receivedAt))
-            .apply { if (m.sim != null) put("sim", m.sim) },
-        )
+  private fun sendLoop() {
+    while (!stopping) {
+      try {
+        val prefs = GatewayPrefs(this)
+        if (!prefs.paused) {
+          val db = GatewayDb.get(this)
+          for (row in db.pendingSends(50)) {
+            if (stopping || GatewayPrefs(this).paused) break
+            SmsSender.send(this, db, row, prefs.subscriptionId)
+            Thread.sleep(prefs.sendIntervalMs)
+          }
+        }
+        waitForWork(15_000)
+      } catch (e: InterruptedException) {
+        return
+      } catch (e: Exception) {
+        Log.w(TAG, "send loop: ${e.javaClass.simpleName}: ${e.message}")
+        try {
+          Thread.sleep(5_000)
+        } catch (_: InterruptedException) {
+          return
+        }
       }
-      c.post(GatewayClient.INBOUND, JSONObject().put("messages", messages))
-      db.markUploaded(batch.map { it.id })
-      if (batch.size < 50) return
     }
   }
 
-  private fun flushStatuses(c: GatewayClient) {
-    val db = GatewayDb.get(this)
-    while (true) {
-      val batch = db.pendingStatuses(50)
-      if (batch.isEmpty()) return
-      val statuses = JSONArray()
-      for (s in batch) {
-        statuses.put(
-          JSONObject().put("id", s.id).put("status", s.status).put("at", iso(s.at)).apply { if (s.error != null) put("error", s.error.take(200)) },
-        )
-      }
-      c.post(GatewayClient.STATUS, JSONObject().put("statuses", statuses))
-      db.deleteStatusesThrough(batch.last().seq)
-      if (batch.size < 50) return
-    }
-  }
-
-  private fun heartbeat(c: GatewayClient) {
-    c.post(GatewayClient.HEARTBEAT, heartbeatBody(this))
-  }
-
-  private fun ok() {
-    val prefs = GatewayPrefs(this)
-    prefs.lastContactAt = System.currentTimeMillis()
+  private fun ok(prefs: GatewayPrefs) {
+    prefs.lastAnswerAt = System.currentTimeMillis()
     if (prefs.lastError != null) {
       prefs.lastError = null
-      GatewayDb.get(this).addEvent("service", "Connected to the server")
+      GatewayDb.get(this).addEvent("service", "AI is answering again")
       updateNotification()
     }
   }
 
-  private fun fail(where: String, e: Exception) {
-    val msg = when (e) {
-      is GatewayHttpException -> if (e.status == 401) "Server refused the pairing (401): pair again" else e.message ?: "HTTP ${e.status}"
-      is IllegalStateException -> e.message ?: "not ready"
-      else -> "${e.javaClass.simpleName}: ${e.message ?: ""}".take(160)
-    }
+  private fun fail(msg: String) {
     val prefs = GatewayPrefs(this)
     if (prefs.lastError != msg) {
       prefs.lastError = msg
-      GatewayDb.get(this).addEvent("error", "$where: $msg")
       updateNotification()
     }
-    Log.w(TAG, "$where failed: $msg")
+    Log.w(TAG, msg)
   }
 
   // ---------------------------------------------------------------------------
@@ -257,14 +204,14 @@ class GatewayService : Service() {
   private fun notification(): Notification {
     val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel(CHANNEL_ID) == null) {
-      nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "SMS gateway", NotificationManager.IMPORTANCE_LOW))
+      nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "SMS AI", NotificationManager.IMPORTANCE_LOW))
     }
     val error = GatewayPrefs(this).lastError
     val open = packageManager.getLaunchIntentForPackage(packageName)?.let {
       PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
     val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL_ID) else Notification.Builder(this)
-    return b.setContentTitle(if (error == null) "SMS AI gateway is running" else "SMS AI gateway: problem")
+    return b.setContentTitle(if (error == null) "SMS AI is running" else "SMS AI: problem")
       .setContentText(error ?: "Answering texts to this phone")
       .setSmallIcon(android.R.drawable.stat_notify_chat)
       .setOngoing(true)
@@ -273,17 +220,19 @@ class GatewayService : Service() {
   }
 
   companion object {
-    private const val TAG = "SmsAiGateway"
+    private const val TAG = "SmsAi"
     private const val CHANNEL_ID = "smsai_gateway"
     private const val NOTIFICATION_ID = 7131
     private const val ACTION_STOP = "expo.modules.smsgateway.STOP"
-    private const val HEARTBEAT_MS = 60_000L
     private val signal = Object()
+
+    /** Shared by every AI call so a provider outage pauses calls app-wide. Replaced when the key changes. */
+    @Volatile var breaker = Breaker()
 
     @Volatile var running = false
       private set
 
-    /** Wakes the uploader now (a text arrived or a send result came in). */
+    /** Wakes both loops now (a text arrived, a reply was queued or a setting changed). */
     fun wake() {
       synchronized(signal) { signal.notifyAll() }
     }
@@ -292,53 +241,32 @@ class GatewayService : Service() {
       synchronized(signal) { signal.wait(ms.coerceAtLeast(1)) }
     }
 
-    private fun nextBackoff(prev: Long) = if (prev == 0L) 2_000L else (prev * 2).coerceAtMost(60_000L)
+    /** One AI call with the current settings (also used by the app's "try a question" box). */
+    fun ask(context: Context, messages: List<ChatMessage>): Outcome {
+      val prefs = GatewayPrefs(context)
+      val key = prefs.apiKey ?: throw IllegalStateException("No API key")
+      return AiClient(DeepInfra(DEEPINFRA_BASE_URL, key), prefs.aiOptions(), breaker).answer(messages)
+    }
+
+    fun brain(context: Context): Brain {
+      val app = context.applicationContext
+      return Brain(GatewayDb.get(app), { GatewayPrefs(app).brainSettings() }, { ask(app, it) })
+    }
 
     fun start(context: Context) {
       val intent = Intent(context, GatewayService::class.java)
       try {
         if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent) else context.startService(intent)
       } catch (e: Exception) {
-        // Android can refuse a background start; the text is saved and goes out
-        // when the service next runs (app opened, reboot, or START_STICKY restart).
-        Log.w(TAG, "could not start the gateway service: ${e.javaClass.simpleName}")
+        // Android can refuse a background start; the text is saved and is
+        // answered when the service next runs (app opened, reboot, or a
+        // START_STICKY restart).
+        Log.w(TAG, "could not start the service: ${e.javaClass.simpleName}")
       }
     }
 
     fun stop(context: Context) {
       context.stopService(Intent(context, GatewayService::class.java))
-    }
-
-    private fun iso(ms: Long): String =
-      SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date(ms))
-
-    /** The heartbeat body (also used by the module's connection test). */
-    fun heartbeatBody(context: Context): JSONObject {
-      val prefs = GatewayPrefs(context)
-      val counts = GatewayDb.get(context).counts()
-      val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-      val battery = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).takeIf { it in 0..100 }
-      val charging = if (Build.VERSION.SDK_INT >= 23) bm.isCharging else null
-      val signalLevel = runCatching {
-        if (Build.VERSION.SDK_INT >= 28) (context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).signalStrength?.level else null
-      }.getOrNull()
-      val sim = runCatching {
-        val sm = context.getSystemService(SubscriptionManager::class.java)
-        val id = if (prefs.subscriptionId >= 0) prefs.subscriptionId else SubscriptionManager.getDefaultSmsSubscriptionId()
-        sm.getActiveSubscriptionInfo(id)?.carrierName?.toString()
-      }.getOrNull()
-      val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: ""
-      return JSONObject()
-        .put("device_id", prefs.deviceId)
-        .put("app_version", version.take(32))
-        .put("battery", battery ?: JSONObject.NULL)
-        .put("charging", charging ?: JSONObject.NULL)
-        .put("signal", signalLevel ?: JSONObject.NULL)
-        .put("sim_label", sim?.take(64) ?: JSONObject.NULL)
-        .put("inbox_pending", counts.inboxPending)
-        .put("outbox_pending", counts.outboxPending + counts.sending)
-        .put("status_pending", counts.statusPending)
-        .put("paused", prefs.paused)
     }
   }
 }

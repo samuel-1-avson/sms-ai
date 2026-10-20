@@ -12,8 +12,32 @@ import android.telephony.SubscriptionManager
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.kotlin.records.Field
+import expo.modules.kotlin.records.Record
+import expo.modules.smsgateway.brain.AiError
+import expo.modules.smsgateway.brain.AnswerError
+import expo.modules.smsgateway.brain.Breaker
+import expo.modules.smsgateway.brain.Brain
+import expo.modules.smsgateway.brain.buildPrompt
+import expo.modules.smsgateway.brain.sanitize
+import expo.modules.smsgateway.brain.scrub
+import expo.modules.smsgateway.brain.splitFirst
+import expo.modules.smsgateway.brain.truncateQuestion
+import expo.modules.smsgateway.brain.MAX_QUESTION_CHARS
 
-/** The JavaScript face of the gateway: pairing, start/stop and status for the app's screens. */
+/** Settings the app's Settings screen can change; fields left out are kept. */
+class SettingsUpdate : Record {
+  @Field var model: String? = null
+  @Field var fallbackModel: String? = null
+  @Field var ownNumber: String? = null
+  @Field var dailyPerNumberCap: Int? = null
+  @Field var dailySmsPartCap: Int? = null
+  @Field var dailySpendCapUsd: Double? = null
+  @Field var subscriptionId: Int? = null
+  @Field var sendIntervalMs: Double? = null
+}
+
+/** The JavaScript face of the SMS AI: settings, start/stop, status and a test question. */
 class SmsGatewayModule : Module() {
   private val context: Context
     get() = appContext.reactContext ?: throw CodedException("ERR_NO_CONTEXT", "React context is not available", null)
@@ -23,25 +47,77 @@ class SmsGatewayModule : Module() {
 
     Function("getStatus") {
       val prefs = GatewayPrefs(context)
-      val counts = GatewayDb.get(context).counts()
+      val db = GatewayDb.get(context)
+      val counts = db.counts()
+      val usage = db.usage(Brain.dayOf(System.currentTimeMillis()))
       mapOf(
         "configured" to prefs.configured,
-        "serverUrl" to prefs.serverUrl,
         "enabled" to prefs.enabled,
         "running" to GatewayService.running,
         "paused" to prefs.paused,
-        "subscriptionId" to prefs.subscriptionId,
-        "sendIntervalMs" to prefs.sendIntervalMs,
-        "deviceId" to prefs.deviceId,
         "lastError" to prefs.lastError,
-        "lastContactAt" to prefs.lastContactAt.toDouble(),
-        "inboxPending" to counts.inboxPending,
+        "lastAnswerAt" to prefs.lastAnswerAt.toDouble(),
+        "aiBreaker" to GatewayService.breaker.state(),
+        "waiting" to counts.waiting,
         "outboxPending" to counts.outboxPending,
         "sending" to counts.sending,
-        "statusPending" to counts.statusPending,
         "sentToday" to counts.sentToday,
+        "failedToday" to counts.failedToday,
         "receivedToday" to counts.receivedToday,
+        "answeredToday" to usage.questions,
+        "smsPartsToday" to usage.smsParts,
+        "aiCostToday" to usage.aiCostUsd,
+        "aiCallsToday" to usage.aiCalls,
+        "aiFailuresToday" to usage.aiFailures,
       )
+    }
+
+    Function("getSettings") {
+      val prefs = GatewayPrefs(context)
+      val key = prefs.apiKey
+      mapOf(
+        "hasApiKey" to !key.isNullOrBlank(),
+        // Enough to recognise which key is saved, never the key itself.
+        "apiKeyHint" to key?.takeIf { it.length >= 8 }?.let { "…" + it.takeLast(4) },
+        "model" to prefs.model,
+        "fallbackModel" to prefs.fallbackModel,
+        "ownNumber" to prefs.ownNumber,
+        "dailyPerNumberCap" to prefs.dailyPerNumberCap,
+        "dailySmsPartCap" to prefs.dailySmsPartCap,
+        "dailySpendCapUsd" to prefs.dailySpendCapUsd,
+        "subscriptionId" to prefs.subscriptionId,
+        "sendIntervalMs" to prefs.sendIntervalMs.toDouble(),
+      )
+    }
+
+    Function("setSettings") { s: SettingsUpdate ->
+      val prefs = GatewayPrefs(context)
+      s.model?.let { if (it.isNotBlank()) prefs.model = it }
+      s.fallbackModel?.let { prefs.fallbackModel = it }
+      s.ownNumber?.let { prefs.ownNumber = it }
+      s.dailyPerNumberCap?.let { prefs.dailyPerNumberCap = it }
+      s.dailySmsPartCap?.let { prefs.dailySmsPartCap = it }
+      s.dailySpendCapUsd?.let { prefs.dailySpendCapUsd = it }
+      s.subscriptionId?.let { prefs.subscriptionId = it }
+      s.sendIntervalMs?.let { prefs.sendIntervalMs = it.toLong() }
+      GatewayService.wake()
+    }
+
+    Function("setApiKey") { key: String ->
+      val k = key.trim()
+      if (k.length < 16 || k.any { it.isWhitespace() }) throw CodedException("ERR_KEY", "That does not look like a DeepInfra API key", null)
+      val prefs = GatewayPrefs(context)
+      prefs.apiKey = k
+      prefs.lastError = null
+      // A new key deserves a fresh start, even if the old one tripped the breaker.
+      GatewayService.breaker = Breaker()
+      GatewayDb.get(context).addEvent("service", "API key saved")
+      GatewayService.wake()
+    }
+
+    Function("clearApiKey") {
+      GatewayPrefs(context).apiKey = null
+      GatewayDb.get(context).addEvent("service", "API key removed")
     }
 
     Function("getPermissions") {
@@ -56,27 +132,9 @@ class SmsGatewayModule : Module() {
       )
     }
 
-    /** Saves the pairing (URL + device secret). Does not start the service. */
-    Function("configure") { serverUrl: String, secret: String ->
-      val url = serverUrl.trim().trimEnd('/')
-      if (!url.startsWith("https://") && !url.startsWith("http://")) throw CodedException("ERR_URL", "Server URL must start with https://", null)
-      if (secret.length < 24) throw CodedException("ERR_SECRET", "Device secret is too short", null)
-      val prefs = GatewayPrefs(context)
-      prefs.serverUrl = url
-      prefs.secret = secret
-      prefs.lastError = null
-      GatewayDb.get(context).addEvent("service", "Paired with $url")
-    }
-
-    Function("unpair") {
-      GatewayService.stop(context)
-      GatewayPrefs(context).clear()
-      GatewayDb.get(context).addEvent("service", "Unpaired")
-    }
-
     Function("start") {
       val prefs = GatewayPrefs(context)
-      if (!prefs.configured) throw CodedException("ERR_NOT_PAIRED", "Pair with the server first", null)
+      if (!prefs.configured) throw CodedException("ERR_NO_KEY", "Add your DeepInfra API key first", null)
       prefs.enabled = true
       GatewayService.start(context)
     }
@@ -90,14 +148,6 @@ class SmsGatewayModule : Module() {
       GatewayPrefs(context).paused = paused
       GatewayDb.get(context).addEvent("service", if (paused) "Replies paused" else "Replies resumed")
       GatewayService.wake()
-    }
-
-    Function("setSubscriptionId") { id: Int ->
-      GatewayPrefs(context).subscriptionId = id
-    }
-
-    Function("setSendIntervalMs") { ms: Double ->
-      GatewayPrefs(context).sendIntervalMs = ms.toLong()
     }
 
     /** Active SIMs (needs READ_PHONE_STATE). */
@@ -122,15 +172,32 @@ class SmsGatewayModule : Module() {
       GatewayDb.get(context).recentEvents(limit.coerceIn(1, 200)).map { mapOf("at" to it.at.toDouble(), "kind" to it.kind, "text" to it.text) }
     }
 
-    /** One signed heartbeat: proves the URL and secret before the service is started. */
-    AsyncFunction("testConnection") { serverUrl: String, secret: String ->
+    /**
+     * Asks the AI one question exactly as a texter would (same prompt, same
+     * clean-up, same first-SMS cut) but sends nothing. Proves the key works.
+     */
+    AsyncFunction("askAI") { question: String ->
+      val started = System.currentTimeMillis()
       try {
-        val res = GatewayClient(serverUrl.trim().trimEnd('/'), secret).post(GatewayClient.HEARTBEAT, GatewayService.heartbeatBody(context))
-        mapOf("ok" to true, "serverTime" to res.optString("server_time"), "error" to null)
-      } catch (e: GatewayHttpException) {
-        mapOf("ok" to false, "error" to if (e.status == 401) "The server rejected the device secret (401)" else e.message)
+        val q = truncateQuestion(scrub(question), MAX_QUESTION_CHARS)
+        val prefs = GatewayPrefs(context)
+        val out = GatewayService.ask(context, buildPrompt(q, emptyList(), prefs.brainSettings().contextMaxInputTokens, System.currentTimeMillis()))
+        val text = sanitize(out.text)
+        val (first, rest) = splitFirst(text)
+        mapOf(
+          "ok" to true,
+          "text" to text,
+          "firstSms" to first,
+          "hasMore" to rest.isNotEmpty(),
+          "model" to out.model,
+          "latencyMs" to (System.currentTimeMillis() - started).toDouble(),
+          "costUsd" to out.calls.sumOf { it.costUsd },
+          "error" to null,
+        )
+      } catch (e: AnswerError) {
+        mapOf("ok" to false, "error" to ((e.error as? AiError)?.message ?: e.message ?: "AI error").removePrefix("ai: "))
       } catch (e: Exception) {
-        mapOf("ok" to false, "error" to "${e.javaClass.simpleName}: ${e.message ?: "cannot reach the server"}")
+        mapOf("ok" to false, "error" to (e.message ?: e.javaClass.simpleName))
       }
     }
 

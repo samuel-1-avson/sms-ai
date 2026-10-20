@@ -1,11 +1,9 @@
 {
-  "name": "@smsai/gateway",
+  "name": "@smsai/phone",
   "version": "0.1.0",
   "main": "index.ts",
   "dependencies": {
-    "@smsai/shared": "workspace:*",
     "expo": "~58.0.16",
-    "expo-camera": "~58.0.11",
     "expo-dev-client": "~58.0.14",
     "expo-status-bar": "~58.0.3",
     "expo-system-ui": "~58.0.6",
